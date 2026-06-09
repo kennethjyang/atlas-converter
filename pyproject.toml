@@ -4,4 +4,24 @@ version = "0.1.0"
 description = "Tool to convert BrainGlobe formatted atlases into Pinpoint V compatible atlases."
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "brainglobe-atlasapi>=2.3.1",
+    "zarr>=3.2.1",
+]
+
+[tool.ruff]
+fix = true
+
+[tool.pyrefly]
+project-includes = [
+    "**/*.py*",
+    "**/*.ipynb",
+]
+preset = "strict"
+
+
+[dependency-groups]
+dev = [
+    "pyrefly>=1.0.0",
+    "ruff>=0.15.16",
+]
