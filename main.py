@@ -1,5 +1,4 @@
 from math import ceil, sqrt
-from pprint import pprint
 
 from brainglobe_atlasapi import BrainGlobeAtlas
 from zarr import create_array
