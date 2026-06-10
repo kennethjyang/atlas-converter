@@ -1,5 +1,5 @@
 from math import ceil, sqrt
-from numpy import array, searchsorted
+from numpy import unique, arange, uint32, searchsorted
 from pprint import pprint
 
 from brainglobe_atlasapi import BrainGlobeAtlas
@@ -9,22 +9,16 @@ from zarr.codecs import BloscCodec, BloscShuffle
 
 def main():
     atlas = BrainGlobeAtlas("allen_mouse_10um", check_latest=True)
+    print("Loaded atlas")
 
     # Remap structure ID's to consecutive identifiers from 1 onward.
-    id_remap = {
-        structure_id: index + 1
-        for index, structure_id in enumerate(atlas.hierarchy.nodes.keys())
-    }
-    k = array(list(id_remap.values()))
-    v = array(list(id_remap.keys()))
-
-    sorted_values_index = v.argsort()
-    k, v = k[sorted_values_index], v[sorted_values_index]
-
-    mapped_index = searchsorted(k, atlas.annotation)
-    remapped_annotation = v[mapped_index]
+    ids = unique(atlas.annotation)
+    new_ids = arange(len(ids), dtype=uint32)
+    print("Computed ids and new ones")
+    mapped_index = searchsorted(ids, atlas.annotation)
+    print("Create mapping from old to new")
+    remapped_annotation = new_ids[mapped_index]
     pprint(remapped_annotation)
-
 
     # chunk_width = ceil(sqrt(1_000_000 / 4 / atlas.shape[1]))
     # z = create_array(
