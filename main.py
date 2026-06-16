@@ -15,18 +15,28 @@ def main():
 
     # Remap structure ID's to consecutive identifiers from 1 onward.
     print("2. Compacting ID range.")
+
+    # Extract IDs
     ids = unique(atlas.annotation)
     new_ids = arange(len(ids), dtype=uint32)
     print("\tExtracted IDs.")
+
+    # Create mapping index for atlas.
     mapped_index = searchsorted(ids, atlas.annotation)
     print("\tCreated mapping from old IDs to new IDs.")
+
+    # Do the mapping.
     remapped_annotation = new_ids[mapped_index]
     print("\tRemapped annotation to new IDs.")
     print()
 
     # Create LUT.
     print("3. Create LUT for colors to new ID.")
+
+    # Init LUT with 0-structure as black.
     lut = [0, 0, 0]
+
+    # Iterate through the structures skipping the 0-structure.
     for structure_id in ids[1:]:
         lut.extend(atlas.structures[structure_id]["rgb_triplet"])
     print("\tMapped colors to LUT.")
