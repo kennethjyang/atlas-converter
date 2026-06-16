@@ -29,6 +29,8 @@ def main():
     lut = [0, 0, 0]
     for structure_id in ids[1:]:
         lut.extend(atlas.structures[structure_id]["rgb_triplet"])
+    print("\tMapped colors to LUT.")
+    print()
 
     # Compress with Zarr.
     print("4. Compress Atlas into Zarr.")
