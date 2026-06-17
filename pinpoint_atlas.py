@@ -1,8 +1,9 @@
-from typing import Annotated, List, Optional
+from typing import Annotated, Any, List, Optional, override
 
 from pydantic import AfterValidator, BaseModel, Field
 
 StructureId = Annotated[int, Field(gt=0)]
+UInt8 = Annotated[int, Field(ge=0, le=255)]
 
 
 class AtlasStructure(BaseModel):
@@ -19,6 +20,15 @@ class AtlasStructure(BaseModel):
     acronym: Annotated[str, Field(min_length=1)]
     parent_id: Optional[StructureId]
     children_ids: set[StructureId]
+
+    def __hash__(self) -> int:
+        return hash(self.name)
+
+    @override
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, AtlasStructure):
+            return self.name == other.name
+        return False
 
 
 def ensure_sorted_and_unique(value: List[float]) -> List[float]:
@@ -81,3 +91,4 @@ class PinpointAtlas(BaseModel):
         Field(min_length=1),
         AfterValidator(ensure_starts_with_none_and_unique),
     ]
+    lut: Annotated[List[UInt8], Field(min_length=3)]

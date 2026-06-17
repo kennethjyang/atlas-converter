@@ -1,14 +1,13 @@
+from json import dump
 from math import ceil, sqrt
-from pprint import pprint
 from typing import List
 
-from brainglobe_atlasapi import BrainGlobeAtlas, list_atlases
-from brainglobe_atlasapi.list_atlases import get_all_atlases_lastversions
-from numpy import arange, searchsorted, uint32, unique
+from brainglobe_atlasapi import BrainGlobeAtlas
+from numpy import searchsorted, unique
 from zarr import create_array
 from zarr.codecs import BloscCodec, BloscShuffle
 
-from pinpoint_atlas import AtlasStructure
+from pinpoint_atlas import AtlasStructure, PinpointAtlas
 
 
 def main():
@@ -64,13 +63,13 @@ def main():
                 children_ids=set(searchsorted(ids, children_og_ids)),
             )
         )
-    print("\tMapped colors to LUT.")
+    print("\tCreated LUTs.")
     print()
 
-    # Compress with Zarr.
-    print("Compress Atlas into Zarr.")
+    # Compress annotations with Zarr.
+    print("Compress annotation into Zarr.")
     chunk_width = ceil(sqrt(1_000_000 / 4 / atlas.shape[1]))
-    z = create_array(
+    annotation_zarr = create_array(
         store=f"out/{atlas.metadata['name']}/{atlas.metadata['resolution'][0]}.zarr",
         shape=atlas.shape,
         chunks=(chunk_width, atlas.shape[1], chunk_width),
@@ -79,7 +78,33 @@ def main():
         compressors=BloscCodec(shuffle=BloscShuffle.bitshuffle),
         overwrite=True,
     )
-    z[:] = remapped_annotation
+    annotation_zarr[:] = remapped_annotation
+    print("\tCompressed annotations.")
+    print()
+
+    # Build atlas definition.
+    print("Build Pinpoint atlas definition.")
+
+    # Extract root ID.
+    root_id = atlas.hierarchy.root
+    if root_id is None:
+        raise ValueError("Atlas root not found in hierarchy.")
+
+    # Build atlas.
+    pinpoint_atlas = PinpointAtlas(
+        name=atlas.metadata["name"],
+        resolutions=[atlas.metadata["resolution"][0]],
+        root_id=root_id,
+        structures=structure_lut,
+        lut=color_lut,
+    )
+    print()
+
+    print("Export Pinpoint atlas definition.")
+    with open(f"out/{atlas.metadata['name']}/atlas.json", "w") as f:
+        f.write(pinpoint_atlas.model_dump_json())
+    with open(f"out/{atlas.metadata['name']}/schema.json", "w") as f:
+        dump(pinpoint_atlas.model_json_schema(), f, separators=(",", ":"))
 
 
 if __name__ == "__main__":
