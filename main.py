@@ -1,49 +1,74 @@
 from math import ceil, sqrt
 from pprint import pprint
+from typing import List
 
-from brainglobe_atlasapi import BrainGlobeAtlas
+from brainglobe_atlasapi import BrainGlobeAtlas, list_atlases
+from brainglobe_atlasapi.list_atlases import get_all_atlases_lastversions
 from numpy import arange, searchsorted, uint32, unique
 from zarr import create_array
 from zarr.codecs import BloscCodec, BloscShuffle
 
+from pinpoint_atlas import AtlasStructure
+
 
 def main():
-    print("1. Loading Atlas.")
+    print("Loading Atlas.")
     atlas = BrainGlobeAtlas("allen_mouse_100um", check_latest=True)
     print("\tAtlas loaded.")
     print()
 
-    # Remap structure ID's to consecutive identifiers from 1 onward.
-    print("2. Compacting ID range.")
+    # Remap structure IDs to consecutive IDs.
+    print("Compacting ID range.")
 
-    # Extract IDs
+    # Extract IDs.
     ids = unique(atlas.annotation)
-    new_ids = arange(len(ids), dtype=uint32)
-    print("\tExtracted IDs.")
+    print("\tExtracted IDs and sort.")
 
-    # Create mapping index for atlas.
-    mapped_index = searchsorted(ids, atlas.annotation)
-    print("\tCreated mapping from old IDs to new IDs.")
-
-    # Do the mapping.
-    remapped_annotation = new_ids[mapped_index]
-    print("\tRemapped annotation to new IDs.")
+    # Map from old ID's to consecutive range.
+    remapped_annotation = searchsorted(ids, atlas.annotation)
+    print("\tCompacted IDs.")
     print()
 
-    # Create LUT.
-    print("3. Create LUT for colors to new ID.")
+    # Create color and name LUT.
+    print("Create color and name LUT for new IDs.")
 
-    # Init LUT with 0-structure as black.
-    lut = [0, 0, 0]
+    # Init color LUT with 0-structure as black (empty).
+    color_lut = [0, 0, 0]
+    structure_lut: List[AtlasStructure | None] = [None]
 
     # Iterate through the structures skipping the 0-structure.
     for structure_id in ids[1:]:
-        lut.extend(atlas.structures[structure_id]["rgb_triplet"])
+        # Get the structure data.
+        structure_data = atlas.structures[structure_id]
+        hierarchy_node = atlas.hierarchy.get_node(structure_id)
+
+        # Crash out if the node is missing.
+        if hierarchy_node is None:
+            raise ValueError(f"Structure {structure_id} not found in hierarchy.")
+
+        # Extract color into color LUT.
+        color_lut.extend(structure_data["rgb_triplet"])
+
+        # Extract parent and children.
+        parent_og_id = hierarchy_node.predecessor(atlas.hierarchy.identifier)
+        children_og_ids = hierarchy_node.successors(atlas.hierarchy.identifier)
+
+        # Build structure (convert parent and children).
+        structure_lut.append(
+            AtlasStructure(
+                name=structure_data["name"],
+                acronym=structure_data["acronym"],
+                parent_id=None
+                if parent_og_id is None
+                else searchsorted(ids, parent_og_id),
+                children_ids=set(searchsorted(ids, children_og_ids)),
+            )
+        )
     print("\tMapped colors to LUT.")
     print()
 
     # Compress with Zarr.
-    print("4. Compress Atlas into Zarr.")
+    print("Compress Atlas into Zarr.")
     chunk_width = ceil(sqrt(1_000_000 / 4 / atlas.shape[1]))
     z = create_array(
         store=f"out/{atlas.metadata['name']}/{atlas.metadata['resolution'][0]}.zarr",
