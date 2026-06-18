@@ -39,6 +39,8 @@ jobs:
     name: Type Check
     if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: 🛎 Checkout
@@ -50,7 +52,7 @@ jobs:
         uses: astral-sh/setup-uv@v8.2.0
         with:
           activate-environment: 'true'
-      
+
       - name: 🔄 Sync Dependencies
         run: uv sync
 
