@@ -32,7 +32,7 @@ def main():
     print("Create color and name LUT for new IDs.")
 
     # Init color LUT with 0-structure as black (empty).
-    color_lut = [0, 0, 0]
+    color_lut = [0, 0, 0, 255]
     structure_lut: List[AtlasStructure | None] = [None]
 
     # Iterate through the structures skipping the 0-structure.
@@ -46,7 +46,7 @@ def main():
             raise ValueError(f"Structure {structure_id} not found in hierarchy.")
 
         # Extract color into color LUT.
-        color_lut.extend(structure_data["rgb_triplet"])
+        color_lut.extend([*structure_data["rgb_triplet"], 255])
 
         # Extract parent and children.
         parent_og_id = hierarchy_node.predecessor(atlas.hierarchy.identifier)
