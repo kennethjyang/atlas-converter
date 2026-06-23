@@ -71,15 +71,6 @@ def ensure_starts_with_none_and_unique(
     return value
 
 
-def ensure_rgba_lut(value: List[int]) -> List[int]:
-    """Ensures the LUT is stored as RGBA entries with opaque alpha."""
-    if len(value) % 4 != 0:
-        raise ValueError("LUT must contain RGBA entries!")
-    if any(alpha != 255 for alpha in value[3::4]):
-        raise ValueError("LUT alpha values must be 255!")
-    return value
-
-
 class PinpointAtlas(BaseModel):
     """Atlas description and metadata.
 
@@ -100,4 +91,3 @@ class PinpointAtlas(BaseModel):
         Field(min_length=1),
         AfterValidator(ensure_starts_with_none_and_unique),
     ]
-    lut: Annotated[List[UInt8], Field(min_length=4), AfterValidator(ensure_rgba_lut)]

@@ -103,7 +103,6 @@ def main():
         resolutions=[atlas.metadata["resolution"][0]],
         root_id=root_id,
         structures=structure_lut,
-        lut=color_lut,
     )
     print()
 
@@ -112,6 +111,10 @@ def main():
     # Write atlas definition.
     with open(atlas_root / "atlas.json", "w") as f:
         f.write(pinpoint_atlas.model_dump_json())
+
+    # Write LUT.
+    with open(atlas_root / "lut.bin", "wb") as f:
+        f.write(bytes(color_lut))
 
     # Write atlas schema (once in root).
     with open(atlas_root.parent / "atlas_schema.json", "w") as f:
