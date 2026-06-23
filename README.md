@@ -1,5 +1,8 @@
-# atlas-converter
+# Atlas Converter
 Tool to convert BrainGlobe formatted atlases into Pinpoint V compatible atlases.
+
+> [!WARNING]
+> Under active and early development. Feel free to poke around and contribute, but this is not a finished product yet.
 
 ## Install for development
 
