@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import List
 
 from brainglobe_atlasapi import BrainGlobeAtlas
-from numpy import searchsorted, unique
+from numpy import searchsorted
 from zarr import create_array
 from zarr.codecs import BloscCodec, BloscShuffle
 
@@ -22,7 +22,7 @@ def main():
     print("Compacting ID range...")
 
     # Extract IDs.
-    ids = unique(atlas.annotation)
+    ids = [0] + sorted(atlas.structures.keys())
     print("\tExtracted IDs and sort.")
 
     # Map from old ID's to consecutive range.
@@ -41,6 +41,7 @@ def main():
     for structure_id in ids[1:]:
         # Get the structure data.
         structure_data = atlas.structures[structure_id]
+        # pyrefly: ignore [bad-argument-type]
         hierarchy_node = atlas.hierarchy.get_node(structure_id)
 
         # Crash out if the node is missing.
@@ -68,11 +69,15 @@ def main():
     print("\tCreated LUTs.")
     print()
 
+    # Create output destination.
+    atlas_root = Path.home() / "pinpoint_atlases" / atlas.metadata["name"]
+    makedirs(atlas_root, exist_ok=True)
+
     # Compress annotations with Zarr.
     print("Compress annotation into Zarr...")
     chunk_width = ceil(sqrt(1_000_000 / 4 / atlas.shape[1]))
     annotation_zarr = create_array(
-        store=f"out/{atlas.metadata['name']}/{atlas.metadata['resolution'][0]}.zarr",
+        store=atlas_root / f"{atlas.metadata['resolution'][0]}.zarr",
         shape=atlas.shape,
         chunks=(chunk_width, atlas.shape[1], chunk_width),
         shards=(chunk_width * 3, atlas.shape[1], chunk_width * 3),
@@ -103,10 +108,6 @@ def main():
     print()
 
     print("Export Pinpoint atlas definition...")
-
-    # Create destination.
-    atlas_root = Path.home() / "pinpoint_atlases" / atlas.metadata["name"]
-    makedirs(atlas_root, exist_ok=True)
 
     # Write atlas definition.
     with open(atlas_root / "atlas.json", "w") as f:
