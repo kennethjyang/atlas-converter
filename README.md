@@ -1,5 +1,8 @@
-# atlas-converter
+# Atlas Converter
 Tool to convert BrainGlobe formatted atlases into Pinpoint V compatible atlases.
+
+> [!WARNING]
+> Under active and early development. Feel free to poke around and contribute, but this is not a finished product yet.
 
 ## Install for development
 
@@ -9,10 +12,10 @@ Tool to convert BrainGlobe formatted atlases into Pinpoint V compatible atlases.
 
 ## Serving custom atlases
 
-Atlases are built to `~/pinpoint_atlases`. The easiest way to make them available is running:
+Atlases are built to `~/pinpoint_atlases`. The easiest way to make them available is to run:
 
 ```bash
-npx servitsy --cors ~/pinpoint_atlases/
+npx serve -C ~/pinpoint_atlases/
 ```
 
-There are many other tools that can also create a simple local HTTP server with CORS configured to serve these files.
+Many other tools can also create a simple local HTTP server with CORS configured to serve these files.
