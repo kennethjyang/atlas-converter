@@ -24,6 +24,7 @@ preset = "strict"
 
 [dependency-groups]
 dev = [
+    "lefthook>=2.1.9",
     "pyrefly>=1.0.0",
     "ruff>=0.15.16",
 ]
