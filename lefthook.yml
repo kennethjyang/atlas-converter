@@ -1,0 +1,11 @@
+pre-commit:
+  jobs:
+    - name: format
+      run: uv run ruff format
+      stage_fixed: true
+    - name: lint
+      run: uv run ruff check
+      stage_fixed: true
+    - name: type-check
+      run: uv run pyrefly check
+      stage_fixed: true
