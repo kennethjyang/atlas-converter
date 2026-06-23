@@ -9,19 +9,16 @@ on:
 jobs:
   static-analysis:
     name: Static Analysis
-    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
 
     steps:
       - name: 🛎 Checkout
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ github.head_ref }}
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
       - name: 📦 Install ruff
-        uses: astral-sh/ruff-action@v4.0.0
+        uses: astral-sh/ruff-action@0ce1b0bf8b818ef400413f810f8a11cdbda0034b
 
       - name: 📝 Format Code
         run: ruff format --check
@@ -31,19 +28,16 @@ jobs:
 
   type-check:
     name: Type Check
-    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: read
 
     steps:
       - name: 🛎 Checkout
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ github.head_ref }}
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
       - name: 🔭 Install UV
-        uses: astral-sh/setup-uv@v8.2.0
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39
         with:
           activate-environment: 'true'
 
