@@ -1,5 +1,7 @@
 from json import dump
 from math import ceil, sqrt
+from os import makedirs
+from pathlib import Path
 from typing import List
 
 from brainglobe_atlasapi import BrainGlobeAtlas
@@ -11,13 +13,13 @@ from pinpoint_atlas import AtlasStructure, PinpointAtlas
 
 
 def main():
-    print("Loading Atlas.")
-    atlas = BrainGlobeAtlas("allen_mouse_100um", check_latest=True)
+    print("Loading Atlas...")
+    atlas = BrainGlobeAtlas("allen_mouse_10um", check_latest=True)
     print("\tAtlas loaded.")
     print()
 
     # Remap structure IDs to consecutive IDs.
-    print("Compacting ID range.")
+    print("Compacting ID range...")
 
     # Extract IDs.
     ids = unique(atlas.annotation)
@@ -29,7 +31,7 @@ def main():
     print()
 
     # Create color and name LUT.
-    print("Create color and name LUT for new IDs.")
+    print("Create color and name LUT for new IDs...")
 
     # Init color LUT with 0-structure as black (empty).
     color_lut = [0, 0, 0, 255]
@@ -67,7 +69,7 @@ def main():
     print()
 
     # Compress annotations with Zarr.
-    print("Compress annotation into Zarr.")
+    print("Compress annotation into Zarr...")
     chunk_width = ceil(sqrt(1_000_000 / 4 / atlas.shape[1]))
     annotation_zarr = create_array(
         store=f"out/{atlas.metadata['name']}/{atlas.metadata['resolution'][0]}.zarr",
@@ -83,7 +85,7 @@ def main():
     print()
 
     # Build atlas definition.
-    print("Build Pinpoint atlas definition.")
+    print("Build Pinpoint atlas definition...")
 
     # Extract root ID.
     root_id = atlas.hierarchy.root
@@ -100,11 +102,19 @@ def main():
     )
     print()
 
-    print("Export Pinpoint atlas definition.")
-    with open(f"out/{atlas.metadata['name']}/atlas.json", "w") as f:
+    print("Export Pinpoint atlas definition...")
+
+    # Create destination.
+    atlas_root = Path.home() / "pinpoint_atlases" / atlas.metadata["name"]
+    makedirs(atlas_root, exist_ok=True)
+
+    # Write atlas definition.
+    with open(atlas_root / "atlas.json", "w") as f:
         f.write(pinpoint_atlas.model_dump_json())
-    with open(f"out/{atlas.metadata['name']}/schema.json", "w") as f:
-        dump(pinpoint_atlas.model_json_schema(), f, separators=(",", ":"))
+
+    # Write atlas schema (once in root).
+    with open(atlas_root.parent / "atlas_schema.json", "w") as f:
+        dump(PinpointAtlas.model_json_schema(), f, separators=(",", ":"))
 
 
 if __name__ == "__main__":
