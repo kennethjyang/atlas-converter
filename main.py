@@ -23,6 +23,13 @@ def main():
 
     # Extract IDs.
     ids = [0] + sorted(atlas.structures.keys())
+
+    # Verify it is under unsigned short range.
+    if len(ids) >= (1 << 16):
+        raise ValueError(
+            f"Atlas structures count exceeds 16-bit data limit ({len(ids)} structures)."
+        )
+
     print("\tExtracted IDs and sort.")
 
     # Map from old ID's to consecutive range.
