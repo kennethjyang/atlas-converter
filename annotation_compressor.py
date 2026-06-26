@@ -57,12 +57,14 @@ def remapped_annotation_ids(
     return remapped_flat.reshape(atlas.shape)
 
 
+@lru_cache(1)
 def remapped_structure_and_color_lut(
     atlas: BrainGlobeAtlas,
 ) -> tuple[list[AtlasStructure | None], list[int]]:
     """Returns structure LUT then color LUT for atlas following remapped IDs.
 
     Structure LUT is returned first followed by color LUT. Color values are the unsigned byte values from the atlas.
+    Last call is cached.
 
     Args:
         atlas: Brain Globe atlas to build a structure color LUT for.
