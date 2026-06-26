@@ -1,3 +1,8 @@
+"""Atlas converter pipeline for Pinpoint V
+
+Build Pinpoint V compatible atlases from BrainGlobe-style atlases.
+"""
+
 from json import dump
 from pandas import Categorical
 from time import perf_counter
@@ -15,6 +20,7 @@ from models import AtlasStructure, PinpointAtlas
 
 
 def main():
+    """Atlas Converter pipeline"""
     print("Loading Atlas...")
     atlas = BrainGlobeAtlas("allen_mouse_10um", check_latest=True)
     print("\tAtlas loaded.")
