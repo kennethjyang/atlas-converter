@@ -1,9 +1,9 @@
 """Annotation compression operations."""
 
+from models import StructureLut
 from functools import lru_cache
 from math import ceil, sqrt
 from pathlib import Path
-from typing import List
 
 from brainglobe_atlasapi import BrainGlobeAtlas
 from numpy import dtype, ndarray, searchsorted, uint16
@@ -61,7 +61,7 @@ def remapped_annotation_ids(
 @lru_cache(1)
 def remapped_structure_and_color_lut(
     atlas: BrainGlobeAtlas,
-) -> tuple[list[AtlasStructure | None], list[int]]:
+) -> tuple[StructureLut, list[int]]:
     """Returns structure LUT then color LUT for atlas following remapped IDs.
 
     Structure LUT is returned first followed by color LUT. Color values are the unsigned byte values from the atlas.
@@ -73,7 +73,7 @@ def remapped_structure_and_color_lut(
         ValueError: if a structure is missing from the atlas hierarchy tree.
     """
     # Init LUTs with 0-structure as black (empty).
-    structure_lut: List[AtlasStructure | None] = [None]
+    structure_lut: StructureLut = [None]
     color_lut = [0, 0, 0, 255]
 
     # Iterate through the structures skipping the 0-structure.

@@ -1,6 +1,6 @@
 """Data models and validation methods."""
 
-from typing import Annotated, Any, List, Optional, override
+from typing import Annotated, Any, Optional, override
 
 from pydantic import AfterValidator, BaseModel, Field
 
@@ -9,6 +9,8 @@ StructureId = Annotated[int, Field(gt=0, lt=1 << 16)]
 
 # Unsigned byte integer.
 UInt8 = Annotated[int, Field(ge=0, le=255)]
+
+type StructureLut = list[Optional[AtlasStructure]]
 
 
 class AtlasStructure(BaseModel):
@@ -36,7 +38,7 @@ class AtlasStructure(BaseModel):
         return False
 
 
-def ensure_sorted_and_unique(value: List[float]) -> List[float]:
+def ensure_sorted_and_unique(value: list[float]) -> list[float]:
     """Ensures the list is sorted and has no duplicates.
 
     Args:
@@ -54,8 +56,8 @@ def ensure_sorted_and_unique(value: List[float]) -> List[float]:
 
 
 def ensure_starts_with_none_and_unique(
-    value: List[AtlasStructure | None],
-) -> List[AtlasStructure | None]:
+    value: StructureLut,
+) -> StructureLut:
     """Ensures the list is sorted and has no duplicates.
 
     Args:
@@ -88,11 +90,11 @@ class PinpointAtlasMetadata(BaseModel):
 
     name: Annotated[str, Field(min_length=1)]
     resolutions: Annotated[
-        List[float], Field(min_length=1), AfterValidator(ensure_sorted_and_unique)
+        list[float], Field(min_length=1), AfterValidator(ensure_sorted_and_unique)
     ]
     root_id: StructureId
     structures: Annotated[
-        List[AtlasStructure | None],
+        StructureLut,
         Field(min_length=1),
         AfterValidator(ensure_starts_with_none_and_unique),
     ]
