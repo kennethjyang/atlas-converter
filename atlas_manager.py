@@ -4,6 +4,7 @@ Operations related to exposing access to Brain Globe atlases.
 """
 
 from typing import Iterator
+from functools import lru_cache
 
 from brainglobe_atlasapi import list_atlases
 from brainglobe_atlasapi.bg_atlas import BrainGlobeAtlas
@@ -28,8 +29,11 @@ def allen_mouse_atlases() -> Iterator[BrainGlobeAtlas]:
     )
 
 
+@lru_cache(1)
 def sorted_structure_ids(atlas: BrainGlobeAtlas):
     """Return all structure IDs in sorted order with 0 prepended.
+
+    The last call is cached.
 
     Args:
         atlas: The atlas to extract IDs from.
