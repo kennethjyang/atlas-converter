@@ -45,7 +45,7 @@ def main():
     start_remap = perf_counter()
     flat_atlas = atlas.annotation.ravel()
     remapped_flat = Categorical(flat_atlas, categories=ids).codes.astype(uint16)
-    remapped_annotation = remapped_flat.reshape(atlas.annotation.shape)
+    remapped_annotation = remapped_flat.reshape(atlas.shape)
     end_remap = perf_counter()
     print(f"\tCompacted IDs in {(end_remap - start_remap):.3f} seconds.")
     print()

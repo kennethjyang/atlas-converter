@@ -28,7 +28,7 @@ def allen_mouse_atlases() -> Iterator[BrainGlobeAtlas]:
     )
 
 
-def sorted_structure_ids(atlas: BrainGlobeAtlas):
+def get_sorted_structure_ids(atlas: BrainGlobeAtlas):
     """Return all structure IDs in sorted order with 0 prepended.
 
     Args:
