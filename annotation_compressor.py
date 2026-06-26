@@ -1,13 +1,19 @@
 """Annotation compression operations."""
 
 from functools import lru_cache
+from math import ceil, sqrt
+from pathlib import Path
 from typing import List
 
 from brainglobe_atlasapi import BrainGlobeAtlas
 from numpy import dtype, ndarray, searchsorted, uint16
 from pandas import Categorical
+from zarr import create_array
+from zarr.codecs import BloscCodec, BloscShuffle
 
 from models import AtlasStructure
+
+type Annotation = ndarray[tuple[int, int, int], dtype[uint16]]
 
 
 @lru_cache(1)
@@ -38,7 +44,7 @@ def sorted_structure_ids(atlas: BrainGlobeAtlas):
 
 def remapped_annotation_ids(
     atlas: BrainGlobeAtlas,
-) -> ndarray[tuple[int, int, int], dtype[uint16]]:
+) -> Annotation:
     """Returns remap annotation values to the sorted structure IDs order.
 
     Args:
@@ -99,3 +105,23 @@ def remapped_structure_and_color_lut(
         )
 
     return structure_lut, color_lut
+
+
+def compress_and_save_annotation(annotation: Annotation, filename: Path):
+    """Zarr compress an annotation and write it to disk.
+
+    Args:
+        annotation: 3D annotation volume to compress and write to disk.
+        filename: Save path of compressed annotation.
+    """
+    chunk_width = ceil(sqrt(1_000_000 / 4 / annotation.shape[1]))
+    annotation_zarr = create_array(
+        store=filename,
+        shape=annotation.shape,
+        chunks=(chunk_width, annotation.shape[1], chunk_width),
+        shards=(chunk_width * 3, annotation.shape[1], chunk_width * 3),
+        dtype=uint16,
+        compressors=BloscCodec(shuffle=BloscShuffle.bitshuffle),
+        overwrite=True,
+    )
+    annotation_zarr[:] = annotation
