@@ -85,10 +85,8 @@ def build_atlas_path(atlas: str | BrainGlobeAtlas) -> Path:
     Args:
         atlas: Atlas name or Brain Globe atlas to return the output root path for.
     """
-    return (
-        build_pinpoint_atlases_path() / atlas
-        if isinstance(atlas, str)
-        else atlas.metadata["name"]
+    return build_pinpoint_atlases_path() / str(
+        atlas if isinstance(atlas, str) else atlas.metadata["name"]
     )
 
 
