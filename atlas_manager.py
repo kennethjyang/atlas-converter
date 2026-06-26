@@ -4,18 +4,18 @@ Operations related to exposing access to Brain Globe atlases.
 """
 
 from json import dump
-from functools import cache
 from pathlib import Path
 from typing import Iterator
 
 from brainglobe_atlasapi import list_atlases
 from brainglobe_atlasapi.bg_atlas import BrainGlobeAtlas
 
-from models import AtlasStructure, PinpointAtlasMetadata
+from models import PinpointAtlasMetadata, StructureLut
+
+"""Brain Globe atlas loading."""
 
 
-@cache
-def all_atlas_names() -> list[str]:
+def get_all_atlas_names_sorted() -> list[str]:
     """Returns sorted list of all latest BrainGlobe atlas names. Cached to avoid re-fetching."""
     return sorted(list_atlases.get_atlases_lastversions().keys())
 
@@ -25,7 +25,7 @@ def all_atlases() -> Iterator[BrainGlobeAtlas]:
     yield from (
         # pyrefly: ignore [bad-argument-type]
         BrainGlobeAtlas(atlas, check_latest=True)
-        for atlas in all_atlas_names()
+        for atlas in get_all_atlas_names_sorted()
     )
 
 
@@ -33,53 +33,23 @@ def allen_mouse_atlases() -> Iterator[BrainGlobeAtlas]:
     """Return only Allen Mouse atlases."""
     yield from (
         # pyrefly: ignore [bad-argument-type]
-        BrainGlobeAtlas(atlas, check_latest=True)
-        for atlas in all_atlas_names()
-        if "allen_mouse" in atlas
+        BrainGlobeAtlas(atlas_name, check_latest=True)
+        for atlas_name in get_all_atlas_names_sorted()
+        if "allen_mouse" in atlas_name
     )
 
 
-def pinpoint_atlases_root() -> Path:
-    """Returns the output root for all atlases."""
-    return Path.home() / "pinpoint_atlases"
+"""Pinpoint Atlas metadata creation."""
 
 
-def atlas_root_by_atlas(atlas: BrainGlobeAtlas) -> Path:
-    """Returns the output root for this atlas.
-
-    Args:
-        atlas: Brain Globe atlas to return the output root path for.
-    """
-    return pinpoint_atlases_root() / atlas.metadata["name"]
-
-
-def atlas_root_by_name(atlas_name: str) -> Path:
-    """Returns the output root for this atlas (by name).
-
-    Args:
-        atlas_name: Name of the atlas to return the output root path for.
-    """
-    return pinpoint_atlases_root() / atlas_name
-
-
-def ensure_path(file: Path) -> Path:
-    """Returns the file path after creating the path if it doesn't exist.
-
-    Args:
-        file: Path to a file to write.
-    """
-    file.parent.mkdir(parents=True, exist_ok=True)
-    return file
-
-
-def pinpoint_atlas_metadata_for_group(
-    group: list[BrainGlobeAtlas], remapped_structures: list[AtlasStructure | None]
+def build_pinpoint_atlas_metadata(
+    group: list[BrainGlobeAtlas], structure_lut: StructureLut
 ) -> PinpointAtlasMetadata:
     """Return Pinpoint Atlas metadata for a given atlas group.
 
     Args:
         group: Group of BrainGlobe atlases to build a Pinpoint Atlas definition for.
-        remapped_structures: Atlas structure LUT.
+        structure_lut: Atlas structure LUT.
     Raises:
         ValueError: If the atlas group does not have a root node in the hierarchy.
     """
@@ -97,8 +67,37 @@ def pinpoint_atlas_metadata_for_group(
         name=first_atlas.metadata["name"],
         resolutions=[atlas.metadata["resolution"][0] for atlas in group],
         root_id=first_atlas.hierarchy.root,
-        structures=remapped_structures,
+        structures=structure_lut,
     )
+
+
+"""File I/O."""
+
+
+def build_pinpoint_atlases_path() -> Path:
+    """Returns the output root for all atlases."""
+    return Path.home() / "pinpoint_atlases"
+
+
+def build_atlas_path(atlas: str | BrainGlobeAtlas) -> Path:
+    """Returns the output root for this atlas.
+
+    Args:
+        atlas: Atlas name or Brain Globe atlas to return the output root path for.
+    """
+    return build_pinpoint_atlases_path() / str(
+        atlas if isinstance(atlas, str) else atlas.metadata["name"]
+    )
+
+
+def prepare_path(file: Path) -> Path:
+    """Returns the file path after creating the path if it doesn't exist.
+
+    Args:
+        file: Path to a file to write.
+    """
+    file.parent.mkdir(parents=True, exist_ok=True)
+    return file
 
 
 def save_pinpoint_atlas_metadata(metadata: PinpointAtlasMetadata):
@@ -109,11 +108,13 @@ def save_pinpoint_atlas_metadata(metadata: PinpointAtlasMetadata):
     Args:
         metadata: Pinpoint Atlas metadata to write.
     """
-    with open(ensure_path(atlas_root_by_name(metadata.name) / "atlas.json"), "w") as f:
+    with open(prepare_path(build_atlas_path(metadata.name) / "atlas.json"), "w") as f:
         f.write(metadata.model_dump_json())
 
 
 def save_pinpoint_atlas_metadata_schema():
     """Write Pinpoint Atlas model schema file to output root."""
-    with open(ensure_path(pinpoint_atlases_root() / "atlas_schema.json"), "w") as f:
+    with open(
+        prepare_path(build_pinpoint_atlases_path() / "atlas_schema.json"), "w"
+    ) as f:
         dump(PinpointAtlasMetadata.model_json_schema(), f, separators=(",", ":"))
