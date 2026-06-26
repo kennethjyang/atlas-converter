@@ -1,8 +1,13 @@
+"""Data models and validation methods."""
+
 from typing import Annotated, Any, List, Optional, override
 
 from pydantic import AfterValidator, BaseModel, Field
 
-StructureId = Annotated[int, Field(gt=0)]
+# Remapped structure ID (should be in the range of an unsigned short)
+StructureId = Annotated[int, Field(gt=0, lt=1 << 16)]
+
+# Unsigned byte integer.
 UInt8 = Annotated[int, Field(ge=0, le=255)]
 
 
@@ -71,7 +76,7 @@ def ensure_starts_with_none_and_unique(
     return value
 
 
-class PinpointAtlas(BaseModel):
+class PinpointAtlasMetadata(BaseModel):
     """Atlas description and metadata.
 
     Attributes:
