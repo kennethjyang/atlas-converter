@@ -13,7 +13,7 @@ class AtlasStructure(BaseModel):
         name: Full name of the structure.
         acronym: Acronym of the structure.
         parent_id: Parent of this structure if it has one (i.e. root would not have one).
-        child_ids: Set of child structure IDs (leaf structures would be empty).
+        children_ids: Set of child structure IDs (leaf structures would be empty).
     """
 
     name: Annotated[str, Field(min_length=1)]

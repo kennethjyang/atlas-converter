@@ -1,11 +1,13 @@
 from json import dump
+from pandas import Categorical
+from time import perf_counter
 from math import ceil, sqrt
 from os import makedirs
 from pathlib import Path
 from typing import List
 
 from brainglobe_atlasapi import BrainGlobeAtlas
-from numpy import searchsorted
+from numpy import searchsorted, uint16
 from zarr import create_array
 from zarr.codecs import BloscCodec, BloscShuffle
 
@@ -23,11 +25,22 @@ def main():
 
     # Extract IDs.
     ids = [0] + sorted(atlas.structures.keys())
+
+    # Verify it is under unsigned short range.
+    if len(ids) >= (1 << 16):
+        raise ValueError(
+            f"Atlas structures count exceeds 16-bit data limit ({len(ids)} structures)."
+        )
+
     print("\tExtracted IDs and sort.")
 
     # Map from old ID's to consecutive range.
-    remapped_annotation = searchsorted(ids, atlas.annotation)
-    print("\tCompacted IDs.")
+    start_remap = perf_counter()
+    flat_atlas = atlas.annotation.ravel()
+    remapped_flat = Categorical(flat_atlas, categories=ids).codes.astype(uint16)
+    remapped_annotation = remapped_flat.reshape(atlas.annotation.shape)
+    end_remap = perf_counter()
+    print(f"\tCompacted IDs in {(end_remap - start_remap):.3f} seconds.")
     print()
 
     # Create color and name LUT.
@@ -44,7 +57,7 @@ def main():
         # pyrefly: ignore [bad-argument-type]
         hierarchy_node = atlas.hierarchy.get_node(structure_id)
 
-        # Crash out if the node is missing.
+        # Stop if the node is missing.
         if hierarchy_node is None:
             raise ValueError(f"Structure {structure_id} not found in hierarchy.")
 
@@ -81,7 +94,7 @@ def main():
         shape=atlas.shape,
         chunks=(chunk_width, atlas.shape[1], chunk_width),
         shards=(chunk_width * 3, atlas.shape[1], chunk_width * 3),
-        dtype=atlas.annotation.dtype,
+        dtype=uint16,
         compressors=BloscCodec(shuffle=BloscShuffle.bitshuffle),
         overwrite=True,
     )
