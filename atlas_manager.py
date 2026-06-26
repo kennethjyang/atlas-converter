@@ -3,6 +3,7 @@
 Operations related to exposing access to Brain Globe atlases.
 """
 
+from json import dump
 from functools import cache
 from pathlib import Path
 from typing import Iterator
@@ -110,3 +111,9 @@ def save_pinpoint_atlas_metadata(metadata: PinpointAtlasMetadata):
     """
     with open(ensure_path(atlas_root_by_name(metadata.name) / "atlas.json"), "w") as f:
         f.write(metadata.model_dump_json())
+
+
+def save_pinpoint_atlas_metadata_schema():
+    """Write Pinpoint Atlas model schema file to output root."""
+    with open(ensure_path(pinpoint_atlases_root() / "atlas_schema.json"), "w") as f:
+        dump(PinpointAtlasMetadata.model_json_schema(), f, separators=(",", ":"))

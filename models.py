@@ -1,11 +1,8 @@
-"""Data models and schema generation methods."""
+"""Data models and validation methods."""
 
-from json import dump
 from typing import Annotated, Any, List, Optional, override
 
 from pydantic import AfterValidator, BaseModel, Field
-
-from atlas_manager import ensure_path, pinpoint_atlases_root
 
 # Remapped structure ID (should be in the range of an unsigned short)
 StructureId = Annotated[int, Field(gt=0, lt=1 << 16)]
@@ -99,9 +96,3 @@ class PinpointAtlasMetadata(BaseModel):
         Field(min_length=1),
         AfterValidator(ensure_starts_with_none_and_unique),
     ]
-
-
-def save_pinpoint_atlas_metadata_schema():
-    """Write Pinpoint Atlas model schema file to output root."""
-    with open(ensure_path(pinpoint_atlases_root() / "atlas_schema.json"), "w") as f:
-        dump(PinpointAtlasMetadata.model_json_schema(), f, separators=(",", ":"))

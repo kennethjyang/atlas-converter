@@ -3,6 +3,7 @@
 Build Pinpoint V compatible atlases from BrainGlobe-style atlases.
 """
 
+from atlas_manager import save_pinpoint_atlas_metadata_schema
 from brainglobe_atlasapi import BrainGlobeAtlas
 
 from annotation_compressor import (
@@ -15,9 +16,6 @@ from atlas_manager import (
     atlas_root_by_atlas,
     pinpoint_atlas_metadata_for_group,
     save_pinpoint_atlas_metadata,
-)
-from models import (
-    save_pinpoint_atlas_metadata_schema,
 )
 
 
