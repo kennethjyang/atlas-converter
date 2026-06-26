@@ -1,8 +1,13 @@
 from typing import Annotated, Any, List, Optional, override
 
 from pydantic import AfterValidator, BaseModel, Field
+from json import dump
+from pathlib import Path
 
-StructureId = Annotated[int, Field(gt=0)]
+# Remapped structure ID (should be in the range of an unsigned short)
+StructureId = Annotated[int, Field(gt=0, lt=1 << 16)]
+
+# Unsigned byte integer.
 UInt8 = Annotated[int, Field(ge=0, le=255)]
 
 
@@ -91,3 +96,13 @@ class PinpointAtlas(BaseModel):
         Field(min_length=1),
         AfterValidator(ensure_starts_with_none_and_unique),
     ]
+
+
+def pinpoint_atlas_schema_writer(output_root: Path):
+    """Write Pinpoint Atlas model schema file to output root.
+
+    Args:
+        output_root: Output root path.
+    """
+    with open(output_root / "atlas_schema.json", "w") as f:
+        dump(PinpointAtlas.model_json_schema(), f, separators=(",", ":"))

@@ -11,7 +11,7 @@ from numpy import searchsorted, uint16
 from zarr import create_array
 from zarr.codecs import BloscCodec, BloscShuffle
 
-from pinpoint_atlas import AtlasStructure, PinpointAtlas
+from models import AtlasStructure, PinpointAtlas
 
 
 def main():
