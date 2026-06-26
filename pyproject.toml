@@ -7,6 +7,8 @@ requires-python = ">=3.14"
 dependencies = [
     "brainglobe-atlasapi>=2.3.1",
     "numpy>=2.4.6",
+    "pandas>=3.0.3",
+    "pandas-stubs~=3.0.3",
     "pydantic>=2.13.4",
     "zarr>=3.2.1",
 ]

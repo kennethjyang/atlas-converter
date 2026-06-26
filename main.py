@@ -1,4 +1,5 @@
 from json import dump
+from pandas import Categorical
 from time import perf_counter
 from math import ceil, sqrt
 from os import makedirs
@@ -35,7 +36,9 @@ def main():
 
     # Map from old ID's to consecutive range.
     start_remap = perf_counter()
-    remapped_annotation = searchsorted(ids, atlas.annotation)
+    flat_atlas = atlas.annotation.ravel()
+    remapped_flat = Categorical(flat_atlas, categories=ids).codes.astype(uint16)
+    remapped_annotation = remapped_flat.reshape(atlas.annotation.shape)
     end_remap = perf_counter()
     print(f"\tCompacted IDs in {(end_remap - start_remap):.3f} seconds.")
     print()
