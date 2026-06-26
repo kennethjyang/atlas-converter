@@ -1,8 +1,11 @@
+from json import dump
 from typing import Annotated, Any, List, Optional, override
 
+from brainglobe_atlasapi import BrainGlobeAtlas
 from pydantic import AfterValidator, BaseModel, Field
-from json import dump
-from pathlib import Path
+
+from annotation_compressor import remapped_structure_and_color_lut
+from atlas_manager import atlas_root_by_name, pinpoint_atlases_root
 
 # Remapped structure ID (should be in the range of an unsigned short)
 StructureId = Annotated[int, Field(gt=0, lt=1 << 16)]
@@ -76,7 +79,7 @@ def ensure_starts_with_none_and_unique(
     return value
 
 
-class PinpointAtlas(BaseModel):
+class PinpointAtlasMetadata(BaseModel):
     """Atlas description and metadata.
 
     Attributes:
@@ -98,11 +101,45 @@ class PinpointAtlas(BaseModel):
     ]
 
 
-def pinpoint_atlas_schema_writer(output_root: Path):
-    """Write Pinpoint Atlas model schema file to output root.
+def pinpoint_atlas_metadata(
+    atlas_group: list[BrainGlobeAtlas],
+) -> PinpointAtlasMetadata:
+    """Return Pinpoint Atlas metadata for a given atlas group.
 
     Args:
-        output_root: Output root path.
+        atlas_group: Group of BrainGlobe atlases to build a Pinpoint Atlas definition for.
+    Raises:
+        ValueError: If the atlas group does not have a root node in the hierarchy.
     """
-    with open(output_root / "atlas_schema.json", "w") as f:
-        dump(PinpointAtlas.model_json_schema(), f, separators=(",", ":"))
+    # Extract first atlas for shared values.
+    first_atlas = atlas_group[0]
+
+    # Raise error of atlas doesn't have root.
+    if first_atlas.hierarchy.root is None:
+        raise ValueError(
+            f'Root for atlas "{first_atlas.metadata["name"]}" not found in hierarchy!'
+        )
+
+    # Build output.
+    return PinpointAtlasMetadata(
+        name=first_atlas.metadata["name"],
+        resolutions=[atlas.metadata["resolution"][0] for atlas in atlas_group],
+        root_id=first_atlas.hierarchy.root,
+        structures=remapped_structure_and_color_lut(first_atlas)[0],
+    )
+
+
+def save_pinpoint_atlas_metadata(metadata: PinpointAtlasMetadata):
+    """Write Pinpoint Atlas metadata to disk.
+
+    Args:
+        metadata: Pinpoint Atlas metadata to write.
+    """
+    with open(atlas_root_by_name(metadata.name) / "atlas.json", "w") as f:
+        f.write(metadata.model_dump_json())
+
+
+def save_pinpoint_atlas_metadata_schema():
+    """Write Pinpoint Atlas model schema file to output root."""
+    with open(pinpoint_atlases_root() / "atlas_schema.json", "w") as f:
+        dump(PinpointAtlasMetadata.model_json_schema(), f, separators=(",", ":"))

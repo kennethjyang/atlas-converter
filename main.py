@@ -16,7 +16,7 @@ from numpy import searchsorted, uint16
 from zarr import create_array
 from zarr.codecs import BloscCodec, BloscShuffle
 
-from models import AtlasStructure, PinpointAtlas
+from models import AtlasStructure, PinpointAtlasMetadata
 
 
 def main():
@@ -118,7 +118,7 @@ def main():
         raise ValueError("Atlas root not found in hierarchy.")
 
     # Build atlas.
-    pinpoint_atlas = PinpointAtlas(
+    pinpoint_atlas = PinpointAtlasMetadata(
         name=atlas.metadata["name"],
         resolutions=[atlas.metadata["resolution"][0]],
         root_id=root_id,
@@ -138,7 +138,7 @@ def main():
 
     # Write atlas schema (once in root).
     with open(atlas_root.parent / "atlas_schema.json", "w") as f:
-        dump(PinpointAtlas.model_json_schema(), f, separators=(",", ":"))
+        dump(PinpointAtlasMetadata.model_json_schema(), f, separators=(",", ":"))
 
 
 if __name__ == "__main__":
