@@ -11,7 +11,7 @@ StructureId = Annotated[int, Field(gt=0, lt=1 << 16)]
 UInt8 = Annotated[int, Field(ge=0, le=255)]
 
 # Structure LUT which will start with None to indicate "empty" space.
-type StructureLut = list[Optional[AtlasStructure]]
+type StructureLut = list[AtlasStructure]
 
 
 class AtlasStructure(BaseModel):
@@ -58,7 +58,7 @@ def ensure_sorted_and_unique(value: list[float]) -> list[float]:
     return sorted(value)
 
 
-def ensure_starts_with_none_and_unique(
+def ensure_starts_with_empty_structure_and_unique(
     value: StructureLut,
 ) -> StructureLut:
     """Ensures the list is sorted and has no duplicates.
@@ -73,11 +73,11 @@ def ensure_starts_with_none_and_unique(
         ValueError: If the list is empty, does not contain exactly 1 None only at the start, or has duplicates.
     """
     if len(value) == 0:
-        raise ValueError("List must have values!")
-    elif value[0] is not None:
-        raise ValueError("List must start with None!")
+        raise ValueError("LUT must have values!")
+    elif value[0].name != "empty":
+        raise ValueError("LUT must start with empty structure!")
     elif len(set(value)) != len(value):
-        raise ValueError("List must have unique values!")
+        raise ValueError("LUT must have unique values!")
     return value
 
 
@@ -99,5 +99,5 @@ class PinpointAtlasMetadata(BaseModel):
     structures: Annotated[
         StructureLut,
         Field(min_length=1),
-        AfterValidator(ensure_starts_with_none_and_unique),
+        AfterValidator(ensure_starts_with_empty_structure_and_unique),
     ]
