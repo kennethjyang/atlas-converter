@@ -1,13 +1,39 @@
 """Annotation compression operations."""
 
+from functools import lru_cache
 from typing import List
 
 from brainglobe_atlasapi import BrainGlobeAtlas
 from numpy import dtype, ndarray, searchsorted, uint16
 from pandas import Categorical
 
-from atlas_manager import sorted_structure_ids
 from models import AtlasStructure
+
+
+@lru_cache(1)
+def sorted_structure_ids(atlas: BrainGlobeAtlas):
+    """Return all structure IDs in sorted order with 0 prepended.
+
+    The last call is cached.
+
+    Args:
+        atlas: The atlas to extract IDs from.
+
+    Raises:
+        ValueError: if the keys already uses 0 (reserved for "empty" space), or if IDs exceed 16-bit value.
+    """
+    sorted_keys = sorted(atlas.structures.keys())
+    if 0 in sorted_keys:
+        raise ValueError(
+            "Atlas already uses reserved ID '0'. We assume this is kept free to indicate \"empty\" space."
+        )
+
+    if len(sorted_keys) + 1 >= (1 << 16):
+        raise ValueError(
+            f"Atlas structure IDs exceeds 16-bit data limit. We assume atlases with under {1 << 16} IDs."
+        )
+
+    return [0] + sorted_keys
 
 
 def remapped_annotation_ids(

@@ -3,8 +3,9 @@
 Operations related to exposing access to Brain Globe atlases.
 """
 
+from os import makedirs
+from pathlib import Path
 from typing import Iterator
-from functools import lru_cache
 
 from brainglobe_atlasapi import list_atlases
 from brainglobe_atlasapi.bg_atlas import BrainGlobeAtlas
@@ -29,27 +30,21 @@ def allen_mouse_atlases() -> Iterator[BrainGlobeAtlas]:
     )
 
 
-@lru_cache(1)
-def sorted_structure_ids(atlas: BrainGlobeAtlas):
-    """Return all structure IDs in sorted order with 0 prepended.
+def pinpoint_atlases_root() -> Path:
+    """Returns the output root for all atlases."""
+    return Path.home() / "pinpoint_atlases"
 
-    The last call is cached.
+
+def atlas_root(atlas: BrainGlobeAtlas) -> Path:
+    """Returns the output root for this atlas.
 
     Args:
-        atlas: The atlas to extract IDs from.
-
-    Raises:
-        ValueError: if the keys already uses 0 (reserved for "empty" space), or if IDs exceed 16-bit value.
+        atlas: Brain Globe atlas to return the output root address for.
     """
-    sorted_keys = sorted(atlas.structures.keys())
-    if 0 in sorted_keys:
-        raise ValueError(
-            "Atlas already uses reserved ID '0'. We assume this is kept free to indicate \"empty\" space."
-        )
+    return pinpoint_atlases_root() / atlas.metadata["name"]
 
-    if len(sorted_keys) + 1 >= (1 << 16):
-        raise ValueError(
-            f"Atlas structure IDs exceeds 16-bit data limit. We assume atlases with under {1 << 16} IDs."
-        )
 
-    return [0] + sorted_keys
+def ensure_directory(path: Path) -> Path:
+    """Returns the path and creates it on disk if it doesn't exist."""
+    makedirs(path, exist_ok=True)
+    return path
