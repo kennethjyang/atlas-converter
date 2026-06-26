@@ -1,3 +1,5 @@
+"""Data models and schema generation methods."""
+
 from json import dump
 from typing import Annotated, Any, List, Optional, override
 

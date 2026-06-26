@@ -3,7 +3,6 @@
 Build Pinpoint V compatible atlases from BrainGlobe-style atlases.
 """
 
-
 from brainglobe_atlasapi import BrainGlobeAtlas
 
 from annotation_compressor import (
@@ -33,8 +32,10 @@ def main():
 
     # Iterate through atlases.
     for atlas in allen_mouse_atlases():
+        print(f"Building {atlas.atlas_name}...")
         compress_and_save_annotation(atlas)
         atlas_group.append(atlas)
+        print("\tBuilt!")
 
     # Compute structures and color LUTs.
     structure_lut, color_lut = remapped_structure_and_color_lut(atlas_group[0])
