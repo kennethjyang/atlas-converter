@@ -5,8 +5,8 @@ Build Pinpoint V compatible atlases from BrainGlobe-style atlases.
 
 from brainglobe_atlasapi import BrainGlobeAtlas
 
-from annotation_compressor import (
-    compress_and_save_annotation,
+from atlas_compressor import (
+    save_annotation,
     save_color_lut,
     build_structure_lut,
     build_color_lut,
@@ -32,7 +32,7 @@ def main():
     # Iterate through atlases.
     for atlas in allen_mouse_atlases():
         print(f"Building {atlas.atlas_name}...")
-        compress_and_save_annotation(atlas)
+        save_annotation(atlas)
         atlas_group.append(atlas)
         print("\tBuilt!")
 

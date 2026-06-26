@@ -33,9 +33,9 @@ def allen_mouse_atlases() -> Iterator[BrainGlobeAtlas]:
     """Return only Allen Mouse atlases."""
     yield from (
         # pyrefly: ignore [bad-argument-type]
-        BrainGlobeAtlas(atlas, check_latest=True)
-        for atlas in get_all_atlas_names_sorted()
-        if "allen_mouse" in atlas
+        BrainGlobeAtlas(atlas_name, check_latest=True)
+        for atlas_name in get_all_atlas_names_sorted()
+        if "allen_mouse" in atlas_name
     )
 
 

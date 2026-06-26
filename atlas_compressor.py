@@ -14,7 +14,7 @@ from models import AtlasStructure, StructureLut, UInt8
 
 type Annotation = ndarray[tuple[int, int, int], dtype[uint16]]
 
-"""Structure remapping."""
+"""Remappings."""
 
 
 def get_sorted_structure_ids(atlas: BrainGlobeAtlas):
@@ -55,6 +55,9 @@ def build_remapped_annotation(
         flat_atlas, categories=get_sorted_structure_ids(atlas)
     ).codes.astype(uint16)
     return remapped_flat.reshape(atlas.shape)
+
+
+"""LUT Builders."""
 
 
 def build_structure_lut(atlas: BrainGlobeAtlas) -> StructureLut:
@@ -119,7 +122,10 @@ def build_color_lut(structure_lut: StructureLut) -> list[UInt8]:
     return lut
 
 
-def compress_and_save_annotation(atlas: BrainGlobeAtlas):
+"""File I/O."""
+
+
+def save_annotation(atlas: BrainGlobeAtlas):
     """Zarr compress an atlas's annotation volume and write it to disk.
 
     Args:
