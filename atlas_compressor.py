@@ -1,5 +1,6 @@
 """Annotation compression operations."""
 
+from functools import lru_cache
 from math import ceil, sqrt
 from pathlib import Path
 
@@ -17,6 +18,7 @@ type Annotation = ndarray[tuple[int, int, int], dtype[uint16]]
 """Remappings."""
 
 
+@lru_cache(1)
 def get_sorted_structure_ids(atlas: BrainGlobeAtlas):
     """Return all structure IDs in sorted order with 0 prepended.
 
