@@ -1,6 +1,5 @@
 """Annotation compression operations."""
 
-from models import StructureLut
 from functools import lru_cache
 from math import ceil, sqrt
 from pathlib import Path
@@ -11,8 +10,8 @@ from pandas import Categorical
 from zarr import create_array
 from zarr.codecs import BloscCodec, BloscShuffle
 
-from atlas_manager import ensure_path, atlas_root_by_atlas
-from models import AtlasStructure
+from atlas_manager import atlas_root_by_atlas, prepare_path
+from models import AtlasStructure, StructureLut
 
 type Annotation = ndarray[tuple[int, int, int], dtype[uint16]]
 
@@ -104,6 +103,7 @@ def remapped_structure_and_color_lut(
                 if parent_og_id is None
                 else searchsorted(ids, parent_og_id),
                 children_ids=set(searchsorted(ids, children_og_ids)),
+                color=[0, 0, 0],
             )
         )
 
@@ -118,7 +118,7 @@ def compress_and_save_annotation(atlas: BrainGlobeAtlas):
     """
     chunk_width = ceil(sqrt(1_000_000 / 4 / atlas.shape[1]))
     annotation_zarr = create_array(
-        store=ensure_path(
+        store=prepare_path(
             atlas_root_by_atlas(atlas) / f"{atlas.metadata['resolution'][0]}.zarr"
         ),
         shape=atlas.shape,
@@ -138,5 +138,5 @@ def save_color_lut(lut: list[int], atlas_directory: Path):
         lut: Color LUT to write to disk. All values must be unsigned bytes.
         atlas_directory: Output directory for this atlas.
     """
-    with open(ensure_path(atlas_directory / "lut.bin"), "wb") as f:
+    with open(prepare_path(atlas_directory / "lut.bin"), "wb") as f:
         f.write(bytes(lut))

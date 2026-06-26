@@ -10,6 +10,7 @@ StructureId = Annotated[int, Field(gt=0, lt=1 << 16)]
 # Unsigned byte integer.
 UInt8 = Annotated[int, Field(ge=0, le=255)]
 
+# Structure LUT which will start with None to indicate "empty" space.
 type StructureLut = list[Optional[AtlasStructure]]
 
 
@@ -21,12 +22,14 @@ class AtlasStructure(BaseModel):
         acronym: Acronym of the structure.
         parent_id: Parent of this structure if it has one (i.e. root would not have one).
         children_ids: Set of child structure IDs (leaf structures would be empty).
+        color: RGB color of the structure as unsigned bytes.
     """
 
     name: Annotated[str, Field(min_length=1)]
     acronym: Annotated[str, Field(min_length=1)]
     parent_id: Optional[StructureId]
     children_ids: set[StructureId]
+    color: Annotated[list[UInt8], Field(min_length=3, max_length=3)]
 
     def __hash__(self) -> int:
         return hash(self.name)

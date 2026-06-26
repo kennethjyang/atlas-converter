@@ -3,8 +3,8 @@
 Operations related to exposing access to Brain Globe atlases.
 """
 
-from json import dump
 from functools import cache
+from json import dump
 from pathlib import Path
 from typing import Iterator
 
@@ -12,6 +12,8 @@ from brainglobe_atlasapi import list_atlases
 from brainglobe_atlasapi.bg_atlas import BrainGlobeAtlas
 
 from models import AtlasStructure, PinpointAtlasMetadata
+
+"""Brain Globe atlas loading."""
 
 
 @cache
@@ -39,37 +41,7 @@ def allen_mouse_atlases() -> Iterator[BrainGlobeAtlas]:
     )
 
 
-def pinpoint_atlases_root() -> Path:
-    """Returns the output root for all atlases."""
-    return Path.home() / "pinpoint_atlases"
-
-
-def atlas_root_by_atlas(atlas: BrainGlobeAtlas) -> Path:
-    """Returns the output root for this atlas.
-
-    Args:
-        atlas: Brain Globe atlas to return the output root path for.
-    """
-    return pinpoint_atlases_root() / atlas.metadata["name"]
-
-
-def atlas_root_by_name(atlas_name: str) -> Path:
-    """Returns the output root for this atlas (by name).
-
-    Args:
-        atlas_name: Name of the atlas to return the output root path for.
-    """
-    return pinpoint_atlases_root() / atlas_name
-
-
-def ensure_path(file: Path) -> Path:
-    """Returns the file path after creating the path if it doesn't exist.
-
-    Args:
-        file: Path to a file to write.
-    """
-    file.parent.mkdir(parents=True, exist_ok=True)
-    return file
+"""Pinpoint Atlas metadata creation."""
 
 
 def pinpoint_atlas_metadata_for_group(
@@ -101,6 +73,42 @@ def pinpoint_atlas_metadata_for_group(
     )
 
 
+"""File I/O."""
+
+
+def pinpoint_atlases_root() -> Path:
+    """Returns the output root for all atlases."""
+    return Path.home() / "pinpoint_atlases"
+
+
+def atlas_root_by_atlas(atlas: BrainGlobeAtlas) -> Path:
+    """Returns the output root for this atlas.
+
+    Args:
+        atlas: Brain Globe atlas to return the output root path for.
+    """
+    return pinpoint_atlases_root() / atlas.metadata["name"]
+
+
+def atlas_root_by_name(atlas_name: str) -> Path:
+    """Returns the output root for this atlas (by name).
+
+    Args:
+        atlas_name: Name of the atlas to return the output root path for.
+    """
+    return pinpoint_atlases_root() / atlas_name
+
+
+def prepare_path(file: Path) -> Path:
+    """Returns the file path after creating the path if it doesn't exist.
+
+    Args:
+        file: Path to a file to write.
+    """
+    file.parent.mkdir(parents=True, exist_ok=True)
+    return file
+
+
 def save_pinpoint_atlas_metadata(metadata: PinpointAtlasMetadata):
     """Write Pinpoint Atlas metadata to disk.
 
@@ -109,11 +117,11 @@ def save_pinpoint_atlas_metadata(metadata: PinpointAtlasMetadata):
     Args:
         metadata: Pinpoint Atlas metadata to write.
     """
-    with open(ensure_path(atlas_root_by_name(metadata.name) / "atlas.json"), "w") as f:
+    with open(prepare_path(atlas_root_by_name(metadata.name) / "atlas.json"), "w") as f:
         f.write(metadata.model_dump_json())
 
 
 def save_pinpoint_atlas_metadata_schema():
     """Write Pinpoint Atlas model schema file to output root."""
-    with open(ensure_path(pinpoint_atlases_root() / "atlas_schema.json"), "w") as f:
+    with open(prepare_path(pinpoint_atlases_root() / "atlas_schema.json"), "w") as f:
         dump(PinpointAtlasMetadata.model_json_schema(), f, separators=(",", ":"))
