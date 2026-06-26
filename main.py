@@ -21,6 +21,7 @@ from models import AtlasStructure, PinpointAtlas
 
 def main():
     """Atlas Converter pipeline"""
+
     print("Loading Atlas...")
     atlas = BrainGlobeAtlas("allen_mouse_10um", check_latest=True)
     print("\tAtlas loaded.")
