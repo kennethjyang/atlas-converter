@@ -107,16 +107,19 @@ def remapped_structure_and_color_lut(
     return structure_lut, color_lut
 
 
-def compress_and_save_annotation(annotation: Annotation, filename: Path):
+def compress_and_save_annotation(
+    annotation: Annotation, resolution: float, atlas_directory: Path
+):
     """Zarr compress an annotation and write it to disk.
 
     Args:
         annotation: 3D annotation volume to compress and write to disk.
-        filename: Save path of compressed annotation.
+        resolution: Volume resolution. Used as the filename.
+        atlas_directory: Output directory for this atlas.
     """
     chunk_width = ceil(sqrt(1_000_000 / 4 / annotation.shape[1]))
     annotation_zarr = create_array(
-        store=filename,
+        store=atlas_directory / f"{resolution}.zarr",
         shape=annotation.shape,
         chunks=(chunk_width, annotation.shape[1], chunk_width),
         shards=(chunk_width * 3, annotation.shape[1], chunk_width * 3),
@@ -125,3 +128,14 @@ def compress_and_save_annotation(annotation: Annotation, filename: Path):
         overwrite=True,
     )
     annotation_zarr[:] = annotation
+
+
+def save_color_lut(lut: list[int], atlas_directory: Path):
+    """Write color LUT as a binary array to disk.
+
+    Args:
+        lut: Color LUT to write to disk. All values must be unsigned bytes.
+        atlas_directory: Output directory for this atlas.
+    """
+    with open(atlas_directory / "lut.bin", "wb") as f:
+        f.write(bytes(lut))
