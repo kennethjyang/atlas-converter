@@ -100,7 +100,6 @@ def main():
     )
     annotation_zarr[:] = remapped_annotation
     print("\tCompressed annotations.")
-    print(annotation_zarr.info_complete())
     print()
 
     # Build atlas definition.
