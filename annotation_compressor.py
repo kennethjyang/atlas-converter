@@ -11,6 +11,7 @@ from pandas import Categorical
 from zarr import create_array
 from zarr.codecs import BloscCodec, BloscShuffle
 
+from atlas_manager import ensure_path
 from models import AtlasStructure
 
 type Annotation = ndarray[tuple[int, int, int], dtype[uint16]]
@@ -121,7 +122,7 @@ def compress_and_save_annotation(
     """
     chunk_width = ceil(sqrt(1_000_000 / 4 / annotation.shape[1]))
     annotation_zarr = create_array(
-        store=atlas_directory / f"{resolution}.zarr",
+        store=ensure_path(atlas_directory / f"{resolution}.zarr"),
         shape=annotation.shape,
         chunks=(chunk_width, annotation.shape[1], chunk_width),
         shards=(chunk_width * 3, annotation.shape[1], chunk_width * 3),
@@ -139,5 +140,5 @@ def save_color_lut(lut: list[int], atlas_directory: Path):
         lut: Color LUT to write to disk. All values must be unsigned bytes.
         atlas_directory: Output directory for this atlas.
     """
-    with open(atlas_directory / "lut.bin", "wb") as f:
+    with open(ensure_path(atlas_directory / "lut.bin"), "wb") as f:
         f.write(bytes(lut))

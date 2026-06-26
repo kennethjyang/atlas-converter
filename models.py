@@ -1,3 +1,4 @@
+from atlas_manager import ensure_path
 from json import dump
 from typing import Annotated, Any, List, Optional, override
 
@@ -132,14 +133,16 @@ def pinpoint_atlas_metadata(
 def save_pinpoint_atlas_metadata(metadata: PinpointAtlasMetadata):
     """Write Pinpoint Atlas metadata to disk.
 
+    Creates folders if needed.
+
     Args:
         metadata: Pinpoint Atlas metadata to write.
     """
-    with open(atlas_root_by_name(metadata.name) / "atlas.json", "w") as f:
+    with open(ensure_path(atlas_root_by_name(metadata.name) / "atlas.json"), "w") as f:
         f.write(metadata.model_dump_json())
 
 
 def save_pinpoint_atlas_metadata_schema():
     """Write Pinpoint Atlas model schema file to output root."""
-    with open(pinpoint_atlases_root() / "atlas_schema.json", "w") as f:
+    with open(ensure_path(pinpoint_atlases_root() / "atlas_schema.json"), "w") as f:
         dump(PinpointAtlasMetadata.model_json_schema(), f, separators=(",", ":"))

@@ -3,21 +3,27 @@
 Operations related to exposing access to Brain Globe atlases.
 """
 
-from os import makedirs
+from functools import cache
 from pathlib import Path
 from typing import Iterator
 
 from brainglobe_atlasapi import list_atlases
 from brainglobe_atlasapi.bg_atlas import BrainGlobeAtlas
 
-# Latest list of all Brain Globe atlases
-ALL_ATLAS_NAMES = sorted(list_atlases.get_atlases_lastversions().keys())
+
+@cache
+def all_atlas_names() -> list[str]:
+    """Returns sorted list of all latest BrainGlobe atlas names. Cached to avoid re-fetching."""
+    return sorted(list_atlases.get_atlases_lastversions().keys())
 
 
 def all_atlases() -> Iterator[BrainGlobeAtlas]:
     """Return all atlases."""
-    # pyrefly: ignore [bad-argument-type]
-    yield from (BrainGlobeAtlas(atlas, check_latest=True) for atlas in ALL_ATLAS_NAMES)
+    yield from (
+        # pyrefly: ignore [bad-argument-type]
+        BrainGlobeAtlas(atlas, check_latest=True)
+        for atlas in all_atlas_names()
+    )
 
 
 def allen_mouse_atlases() -> Iterator[BrainGlobeAtlas]:
@@ -25,7 +31,7 @@ def allen_mouse_atlases() -> Iterator[BrainGlobeAtlas]:
     yield from (
         # pyrefly: ignore [bad-argument-type]
         BrainGlobeAtlas(atlas, check_latest=True)
-        for atlas in ALL_ATLAS_NAMES
+        for atlas in all_atlas_names()
         if "allen_mouse" in atlas
     )
 
@@ -53,7 +59,7 @@ def atlas_root_by_name(atlas_name: str) -> Path:
     return pinpoint_atlases_root() / atlas_name
 
 
-def ensure_directory(path: Path) -> Path:
-    """Returns the path and creates it on disk if it doesn't exist."""
-    makedirs(path, exist_ok=True)
-    return path
+def ensure_path(file: Path) -> Path:
+    """Returns the file path after creating the path if it doesn't exist."""
+    file.parent.mkdir(parents=True, exist_ok=True)
+    return file
