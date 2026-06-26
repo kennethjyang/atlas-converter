@@ -1,12 +1,9 @@
-from atlas_manager import ensure_path
 from json import dump
 from typing import Annotated, Any, List, Optional, override
 
-from brainglobe_atlasapi import BrainGlobeAtlas
 from pydantic import AfterValidator, BaseModel, Field
 
-from annotation_compressor import remapped_structure_and_color_lut
-from atlas_manager import atlas_root_by_name, pinpoint_atlases_root
+from atlas_manager import ensure_path, pinpoint_atlases_root
 
 # Remapped structure ID (should be in the range of an unsigned short)
 StructureId = Annotated[int, Field(gt=0, lt=1 << 16)]
@@ -100,46 +97,6 @@ class PinpointAtlasMetadata(BaseModel):
         Field(min_length=1),
         AfterValidator(ensure_starts_with_none_and_unique),
     ]
-
-
-def pinpoint_atlas_metadata(
-    atlas_group: list[BrainGlobeAtlas],
-) -> PinpointAtlasMetadata:
-    """Return Pinpoint Atlas metadata for a given atlas group.
-
-    Args:
-        atlas_group: Group of BrainGlobe atlases to build a Pinpoint Atlas definition for.
-    Raises:
-        ValueError: If the atlas group does not have a root node in the hierarchy.
-    """
-    # Extract first atlas for shared values.
-    first_atlas = atlas_group[0]
-
-    # Raise error of atlas doesn't have root.
-    if first_atlas.hierarchy.root is None:
-        raise ValueError(
-            f'Root for atlas "{first_atlas.metadata["name"]}" not found in hierarchy!'
-        )
-
-    # Build output.
-    return PinpointAtlasMetadata(
-        name=first_atlas.metadata["name"],
-        resolutions=[atlas.metadata["resolution"][0] for atlas in atlas_group],
-        root_id=first_atlas.hierarchy.root,
-        structures=remapped_structure_and_color_lut(first_atlas)[0],
-    )
-
-
-def save_pinpoint_atlas_metadata(metadata: PinpointAtlasMetadata):
-    """Write Pinpoint Atlas metadata to disk.
-
-    Creates folders if needed.
-
-    Args:
-        metadata: Pinpoint Atlas metadata to write.
-    """
-    with open(ensure_path(atlas_root_by_name(metadata.name) / "atlas.json"), "w") as f:
-        f.write(metadata.model_dump_json())
 
 
 def save_pinpoint_atlas_metadata_schema():

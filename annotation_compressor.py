@@ -11,7 +11,7 @@ from pandas import Categorical
 from zarr import create_array
 from zarr.codecs import BloscCodec, BloscShuffle
 
-from atlas_manager import ensure_path
+from atlas_manager import ensure_path, atlas_root_by_atlas
 from models import AtlasStructure
 
 type Annotation = ndarray[tuple[int, int, int], dtype[uint16]]
@@ -110,27 +110,25 @@ def remapped_structure_and_color_lut(
     return structure_lut, color_lut
 
 
-def compress_and_save_annotation(
-    annotation: Annotation, resolution: float, atlas_directory: Path
-):
-    """Zarr compress an annotation and write it to disk.
+def compress_and_save_annotation(atlas: BrainGlobeAtlas):
+    """Zarr compress an atlas's annotation volume and write it to disk.
 
     Args:
-        annotation: 3D annotation volume to compress and write to disk.
-        resolution: Volume resolution. Used as the filename.
-        atlas_directory: Output directory for this atlas.
+        atlas: BrainGlobe atlas to compress and save the annotation volume of.
     """
-    chunk_width = ceil(sqrt(1_000_000 / 4 / annotation.shape[1]))
+    chunk_width = ceil(sqrt(1_000_000 / 4 / atlas.shape[1]))
     annotation_zarr = create_array(
-        store=ensure_path(atlas_directory / f"{resolution}.zarr"),
-        shape=annotation.shape,
-        chunks=(chunk_width, annotation.shape[1], chunk_width),
-        shards=(chunk_width * 3, annotation.shape[1], chunk_width * 3),
+        store=ensure_path(
+            atlas_root_by_atlas(atlas) / f"{atlas.metadata['resolution'][0]}.zarr"
+        ),
+        shape=atlas.shape,
+        chunks=(chunk_width, atlas.shape[1], chunk_width),
+        shards=(chunk_width * 3, atlas.shape[1], chunk_width * 3),
         dtype=uint16,
         compressors=BloscCodec(shuffle=BloscShuffle.bitshuffle),
         overwrite=True,
     )
-    annotation_zarr[:] = annotation
+    annotation_zarr[:] = remapped_annotation_ids(atlas)
 
 
 def save_color_lut(lut: list[int], atlas_directory: Path):
