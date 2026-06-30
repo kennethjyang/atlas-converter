@@ -17,7 +17,7 @@ from models import PinpointAtlasMetadata, StructureLut
 
 def get_all_atlas_names_sorted() -> list[str]:
     """Returns sorted list of all latest BrainGlobe atlas names. Cached to avoid re-fetching."""
-    return sorted(list_atlases.get_atlases_lastversions().keys())
+    return sorted(list_atlases.get_all_atlases_lastversions().keys())
 
 
 def all_atlases() -> Iterator[BrainGlobeAtlas]:
