@@ -17,7 +17,7 @@ from models import PinpointAtlasMetadata, StructureLut
 
 def get_all_atlas_names_sorted() -> list[str]:
     """Returns sorted list of all latest BrainGlobe atlas names. Cached to avoid re-fetching."""
-    return sorted(list_atlases.get_atlases_lastversions().keys())
+    return sorted(list_atlases.get_all_atlases_lastversions().keys())
 
 
 def all_atlases() -> Iterator[BrainGlobeAtlas]:
@@ -30,12 +30,11 @@ def all_atlases() -> Iterator[BrainGlobeAtlas]:
 
 
 def allen_mouse_atlases() -> Iterator[BrainGlobeAtlas]:
-    """Return only Allen Mouse atlases."""
+    """Return only Allen CCF Mouse atlases."""
     yield from (
         # pyrefly: ignore [bad-argument-type]
-        BrainGlobeAtlas(atlas_name, check_latest=True)
-        for atlas_name in get_all_atlas_names_sorted()
-        if "allen_mouse" in atlas_name
+        BrainGlobeAtlas(f"allen_mouse_{resolution}um", check_latest=True)
+        for resolution in [10, 25, 50, 100]
     )
 
 
