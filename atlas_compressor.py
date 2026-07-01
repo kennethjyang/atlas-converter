@@ -7,6 +7,7 @@ from pathlib import Path
 from brainglobe_atlasapi import BrainGlobeAtlas
 from numpy import dtype, ndarray, searchsorted, uint16
 from pandas import Categorical
+from trimesh import load_mesh
 from zarr import create_array
 from zarr.codecs import BloscCodec, BloscShuffle
 
@@ -19,7 +20,7 @@ type Annotation = ndarray[tuple[int, int, int], dtype[uint16]]
 
 
 @lru_cache(1)
-def get_sorted_structure_ids(atlas: BrainGlobeAtlas):
+def get_sorted_structure_ids(atlas: BrainGlobeAtlas) -> list[int]:
     """Return all structure IDs in sorted order with 0 prepended.
 
     The last call is cached.
@@ -157,3 +158,32 @@ def save_color_lut(lut: list[int], atlas_directory: Path):
     """
     with open(prepare_path(atlas_directory / "lut.bin"), "wb") as f:
         f.write(bytes(lut))
+
+
+def save_meshes(atlas: BrainGlobeAtlas, atlas_directory: Path):
+    """Write atlases meshes to disk as GLB with marching cube decimation.
+
+    Args:
+        atlas: BrainGlobe atlas to convert.
+        atlas_directory: Output directory for this atlas.
+    """
+    for compacted_id, structure in enumerate(
+        get_sorted_structure_ids(atlas)[1:], start=1
+    ):
+        # Get mesh path.
+        mesh_path = str(atlas.meshfile_from_structure(structure))
+
+        # Skip missing meshes.
+        if not Path(mesh_path).is_file():
+            continue
+
+        # Load.
+        mesh = load_mesh(mesh_path)
+
+        # Apply simplification and cleanup.
+        mesh = mesh.simplify_quadric_decimation(percent=0.9)
+        mesh.apply_scale(0.001)
+        mesh.process()
+
+        # Export as GLB.
+        mesh.export(prepare_path(atlas_directory / "meshes" / f"{compacted_id}.glb"))
