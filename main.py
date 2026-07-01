@@ -8,13 +8,11 @@ from brainglobe_atlasapi import BrainGlobeAtlas
 from atlas_compressor import (
     build_color_lut,
     build_structure_lut,
-    save_annotation,
     save_color_lut,
     save_meshes,
     get_mesh_set,
 )
 from atlas_manager import (
-    allen_mouse_atlases,
     build_atlas_path,
     build_pinpoint_atlas_metadata,
     save_pinpoint_atlas_metadata,
@@ -29,14 +27,14 @@ def main():
     save_pinpoint_atlas_metadata_schema()
 
     # Build atlas group.
-    atlas_group: list[BrainGlobeAtlas] = []
+    atlas_group: list[BrainGlobeAtlas] = [BrainGlobeAtlas("allen_mouse_10um")]
 
     # Iterate through atlases.
-    for atlas in allen_mouse_atlases():
-        print(f"Building {atlas.atlas_name}...")
-        save_annotation(atlas)
-        atlas_group.append(atlas)
-        print("\tBuilt!")
+    # for atlas in allen_mouse_atlases():
+    #     print(f"Building {atlas.atlas_name}...")
+    #     save_annotation(atlas)
+    #     atlas_group.append(atlas)
+    #     print("\tBuilt!")
 
     # Get first atlas for common data.
     if len(atlas_group) == 0:
