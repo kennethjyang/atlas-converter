@@ -9,6 +9,7 @@ dependencies = [
     "numpy>=2.4.6",
     "pandas>=3.0.3",
     "pydantic>=2.13.4",
+    "pymeshlab>=2025.7.post1",
     "pyrefly>=1.0.0",
     "ruff>=0.15.16",
     "zarr>=3.2.1",

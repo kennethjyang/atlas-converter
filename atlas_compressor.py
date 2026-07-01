@@ -7,6 +7,9 @@ from pathlib import Path
 from brainglobe_atlasapi import BrainGlobeAtlas
 from numpy import dtype, ndarray, searchsorted, uint16
 from pandas import Categorical
+
+# pyrefly: ignore [missing-module-attribute]
+from pymeshlab import MeshSet
 from zarr import create_array
 from zarr.codecs import BloscCodec, BloscShuffle
 
@@ -109,6 +112,21 @@ def build_structure_lut(atlas: BrainGlobeAtlas) -> StructureLut:
         )
 
     return lut
+
+
+def get_mesh_set(atlas: BrainGlobeAtlas) -> MeshSet:
+    """Returns the mesh set for an atlas.
+
+    Built to follow the sorted ID order.
+
+    Args:
+        atlas: Brain Globe atlas to build the MeshSet for.
+    """
+    mesh_set = MeshSet()
+    for structure in get_sorted_structure_ids(atlas)[1:]:
+        mesh_set.load_new_mesh(atlas.meshfile_from_structure(structure))
+
+    return mesh_set
 
 
 def build_color_lut(structure_lut: StructureLut) -> list[UInt8]:
