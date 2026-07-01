@@ -49,13 +49,13 @@ def mouse(
 
     with Progress() as progress:
         # Iterate through atlases.
-        allen_mouse_atlases_task = progress.add_task(
+        task = progress.add_task(
             "Converting Allen Mouse atlases annotations...", total=4
         )
         for atlas in allen_mouse_atlases():
             save_annotation(atlas, atlas_path)
             atlas_group.append(atlas)
-            progress.update(allen_mouse_atlases_task, advance=1)
+            progress.advance(task)
 
     # Get first atlas for common data.
     if len(atlas_group) == 0:
