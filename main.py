@@ -10,6 +10,8 @@ from atlas_compressor import (
     build_structure_lut,
     save_annotation,
     save_color_lut,
+    save_meshes,
+    get_mesh_set,
 )
 from atlas_manager import (
     allen_mouse_atlases,
@@ -36,8 +38,13 @@ def main():
         atlas_group.append(atlas)
         print("\tBuilt!")
 
+    # Get first atlas for common data.
+    if len(atlas_group) == 0:
+        raise ValueError("No atlases found!")
+    first_atlas = atlas_group[0]
+
     # Compute structures and color LUTs.
-    structure_lut = build_structure_lut(atlas_group[0])
+    structure_lut = build_structure_lut(first_atlas)
     color_lut = build_color_lut(structure_lut)
 
     # Build and save atlas metadata for group.
@@ -48,8 +55,12 @@ def main():
     # Build and save structure color LUT.
     save_color_lut(
         color_lut,
-        build_atlas_path(atlas_group[0]),
+        build_atlas_path(first_atlas),
     )
+
+    # Convert meshes.
+    print("Converting meshes...")
+    save_meshes(get_mesh_set(first_atlas), build_atlas_path(first_atlas))
 
 
 if __name__ == "__main__":

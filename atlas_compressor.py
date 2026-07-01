@@ -124,7 +124,7 @@ def get_mesh_set(atlas: BrainGlobeAtlas) -> MeshSet:
     """
     mesh_set = MeshSet()
     for structure in get_sorted_structure_ids(atlas)[1:]:
-        mesh_set.load_new_mesh(atlas.meshfile_from_structure(structure))
+        mesh_set.load_new_mesh(str(atlas.meshfile_from_structure(structure)))
 
     return mesh_set
 
@@ -175,3 +175,19 @@ def save_color_lut(lut: list[int], atlas_directory: Path):
     """
     with open(prepare_path(atlas_directory / "lut.bin"), "wb") as f:
         f.write(bytes(lut))
+
+
+def save_meshes(mesh_set: MeshSet, atlas_directory: Path):
+    """Write a mesh set to disk as GLB with marching cube decimation.
+
+    Args:
+        mesh_set: MeshSet to write to disk (should be the atlas meshes).
+        atlas_directory: Output directory for this atlas.
+    """
+    mesh_set.meshing_decimation_edge_collapse_for_marching_cube_meshes()
+
+    for mesh_id in range(mesh_set.number_meshes()):
+        mesh_set.set_current_mesh(mesh_id)
+        mesh_set.save_current_mesh(
+            prepare_path(atlas_directory / "meshes" / f"{mesh_id + 1}.glb")
+        )
