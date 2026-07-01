@@ -8,6 +8,7 @@ from typing import Annotated
 
 from brainglobe_atlasapi import BrainGlobeAtlas
 from typer import Argument, Typer
+from rich.progress import Progress
 
 from atlas_compressor import (
     build_color_lut,
@@ -46,12 +47,15 @@ def mouse(
     atlas_group: list[BrainGlobeAtlas] = []
     atlas_path = build_atlas_path("allen_mouse", converted_atlases_path)
 
-    # Iterate through atlases.
-    for atlas in allen_mouse_atlases():
-        print(f"Building {atlas.atlas_name}...")
-        save_annotation(atlas, atlas_path)
-        atlas_group.append(atlas)
-        print("\tBuilt!")
+    with Progress() as progress:
+        # Iterate through atlases.
+        allen_mouse_atlases_task = progress.add_task(
+            "Converting Allen Mouse atlases annotations...", total=4
+        )
+        for atlas in allen_mouse_atlases():
+            save_annotation(atlas, atlas_path)
+            atlas_group.append(atlas)
+            progress.update(allen_mouse_atlases_task, advance=1)
 
     # Get first atlas for common data.
     if len(atlas_group) == 0:
@@ -59,10 +63,8 @@ def mouse(
     first_atlas = atlas_group[0]
 
     # Compute structures and color LUTs.
-    print("Building LUTs...")
     structure_lut = build_structure_lut(first_atlas)
     color_lut = build_color_lut(structure_lut)
-    print("\tBuilt!")
 
     # Build and save atlas metadata for group.
     save_pinpoint_atlas_metadata(
@@ -73,9 +75,9 @@ def mouse(
     save_color_lut(color_lut, atlas_path)
 
     # Convert meshes.
-    print("Converting meshes...")
     save_meshes(first_atlas, atlas_path)
-    print("\tConverted!")
+
+    print("Allen CCF Mouse atlas converted.")
 
 
 if __name__ == "__main__":
