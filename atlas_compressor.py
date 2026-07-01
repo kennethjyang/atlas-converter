@@ -11,7 +11,7 @@ from trimesh import load_mesh
 from zarr import create_array
 from zarr.codecs import BloscCodec, BloscShuffle
 
-from atlas_manager import build_atlas_path, prepare_path
+from atlas_manager import prepare_path
 from models import AtlasStructure, StructureLut, UInt8
 
 type Annotation = ndarray[tuple[int, int, int], dtype[uint16]]
@@ -128,17 +128,16 @@ def build_color_lut(structure_lut: StructureLut) -> list[UInt8]:
 """File I/O."""
 
 
-def save_annotation(atlas: BrainGlobeAtlas):
+def save_annotation(atlas: BrainGlobeAtlas, atlas_path: Path):
     """Zarr compress an atlas's annotation volume and write it to disk.
 
     Args:
         atlas: BrainGlobe atlas to compress and save the annotation volume of.
+        atlas_path: Output directory for this atlas.
     """
     chunk_width = ceil(sqrt(1_000_000 / 4 / atlas.shape[1]))
     annotation_zarr = create_array(
-        store=prepare_path(
-            build_atlas_path(atlas) / f"{atlas.metadata['resolution'][0]}.zarr"
-        ),
+        store=prepare_path(atlas_path / f"{atlas.metadata['resolution'][0]}.zarr"),
         shape=atlas.shape,
         chunks=(chunk_width, atlas.shape[1], chunk_width),
         shards=(chunk_width * 3, atlas.shape[1], chunk_width * 3),
@@ -149,23 +148,23 @@ def save_annotation(atlas: BrainGlobeAtlas):
     annotation_zarr[:] = build_remapped_annotation(atlas)
 
 
-def save_color_lut(lut: list[int], atlas_directory: Path):
+def save_color_lut(lut: list[int], atlas_path: Path):
     """Write color LUT as a binary array to disk.
 
     Args:
         lut: Color LUT to write to disk. All values must be unsigned bytes.
-        atlas_directory: Output directory for this atlas.
+        atlas_path: Output directory for this atlas.
     """
-    with open(prepare_path(atlas_directory / "lut.bin"), "wb") as f:
+    with open(prepare_path(atlas_path / "lut.bin"), "wb") as f:
         f.write(bytes(lut))
 
 
-def save_meshes(atlas: BrainGlobeAtlas, atlas_directory: Path):
+def save_meshes(atlas: BrainGlobeAtlas, atlas_path: Path):
     """Write atlases meshes to disk as GLB with marching cube decimation.
 
     Args:
         atlas: BrainGlobe atlas to convert.
-        atlas_directory: Output directory for this atlas.
+        atlas_path: Output directory for this atlas.
     """
     for compacted_id, structure in enumerate(
         get_sorted_structure_ids(atlas)[1:], start=1
@@ -186,4 +185,4 @@ def save_meshes(atlas: BrainGlobeAtlas, atlas_directory: Path):
         mesh.process()
 
         # Export as GLB.
-        mesh.export(prepare_path(atlas_directory / "meshes" / f"{compacted_id}.glb"))
+        mesh.export(prepare_path(atlas_path / "meshes" / f"{compacted_id}.glb"))

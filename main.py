@@ -3,7 +3,11 @@
 Build Pinpoint V compatible atlases from BrainGlobe-style atlases.
 """
 
+from pathlib import Path
+from typing import Annotated
+
 from brainglobe_atlasapi import BrainGlobeAtlas
+from typer import Argument, Typer
 
 from atlas_compressor import (
     build_color_lut,
@@ -15,25 +19,37 @@ from atlas_compressor import (
 from atlas_manager import (
     allen_mouse_atlases,
     build_atlas_path,
+    build_default_converted_atlases_path,
     build_pinpoint_atlas_metadata,
     save_pinpoint_atlas_metadata,
     save_pinpoint_atlas_metadata_schema,
 )
 
+app = Typer()
 
-def main():
-    """Atlas Converter pipeline"""
 
+@app.command()
+def mouse(
+    converted_atlases_path: Annotated[
+        Path,
+        Argument(help="Output directory and root for all atlases and atlas schema."),
+    ] = build_default_converted_atlases_path(),
+):
+    """Convert only Allen CCF Mouse atlas from BrainGlobe.
+
+    Used for testing. Will not update from online if the atlases were downloaded already.
+    """
     # Write the metadata schema.
-    save_pinpoint_atlas_metadata_schema()
+    save_pinpoint_atlas_metadata_schema(converted_atlases_path)
 
     # Build atlas group.
     atlas_group: list[BrainGlobeAtlas] = []
+    atlas_path = build_atlas_path("allen_mouse", converted_atlases_path)
 
     # Iterate through atlases.
     for atlas in allen_mouse_atlases():
         print(f"Building {atlas.atlas_name}...")
-        save_annotation(atlas)
+        save_annotation(atlas, atlas_path)
         atlas_group.append(atlas)
         print("\tBuilt!")
 
@@ -50,20 +66,17 @@ def main():
 
     # Build and save atlas metadata for group.
     save_pinpoint_atlas_metadata(
-        build_pinpoint_atlas_metadata(atlas_group, structure_lut)
+        build_pinpoint_atlas_metadata(atlas_group, structure_lut), atlas_path
     )
 
     # Build and save structure color LUT.
-    save_color_lut(
-        color_lut,
-        build_atlas_path(first_atlas),
-    )
+    save_color_lut(color_lut, atlas_path)
 
     # Convert meshes.
     print("Converting meshes...")
-    save_meshes(first_atlas, build_atlas_path(first_atlas))
+    save_meshes(first_atlas, atlas_path)
     print("\tConverted!")
 
 
 if __name__ == "__main__":
-    main()
+    app()

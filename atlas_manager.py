@@ -81,18 +81,21 @@ def build_pinpoint_atlas_metadata(
 """File I/O."""
 
 
-def build_pinpoint_atlases_path() -> Path:
+def build_default_converted_atlases_path() -> Path:
     """Returns the output root for all atlases."""
     return Path.home() / "pinpoint_atlases"
 
 
-def build_atlas_path(atlas: str | BrainGlobeAtlas) -> Path:
+def build_atlas_path(
+    atlas: str | BrainGlobeAtlas, converted_atlases_path: Path
+) -> Path:
     """Returns the output root for this atlas.
 
     Args:
         atlas: Atlas name or Brain Globe atlas to return the output root path for.
+        converted_atlases_path: Path to root directory for all converted atlases.
     """
-    return build_pinpoint_atlases_path() / str(
+    return converted_atlases_path / str(
         atlas if isinstance(atlas, str) else atlas.metadata["name"]
     )
 
@@ -107,21 +110,24 @@ def prepare_path(file: Path) -> Path:
     return file
 
 
-def save_pinpoint_atlas_metadata(metadata: PinpointAtlasMetadata):
+def save_pinpoint_atlas_metadata(metadata: PinpointAtlasMetadata, atlas_path: Path):
     """Write Pinpoint Atlas metadata to disk.
 
     Creates folders if needed.
 
     Args:
         metadata: Pinpoint Atlas metadata to write.
+        atlas_path: Output directory for this atlas.
     """
-    with open(prepare_path(build_atlas_path(metadata.name) / "atlas.json"), "w") as f:
+    with open(prepare_path(atlas_path / "atlas.json"), "w") as f:
         f.write(metadata.model_dump_json())
 
 
-def save_pinpoint_atlas_metadata_schema():
-    """Write Pinpoint Atlas model schema file to output root."""
-    with open(
-        prepare_path(build_pinpoint_atlases_path() / "atlas_schema.json"), "w"
-    ) as f:
+def save_pinpoint_atlas_metadata_schema(converted_atlases_path: Path):
+    """Write Pinpoint Atlas model schema file to output root.
+
+    Args:
+        converted_atlases_path: Path to root directory for all converted atlases.
+    """
+    with open(prepare_path(converted_atlases_path / "atlas_schema.json"), "w") as f:
         dump(PinpointAtlasMetadata.model_json_schema(), f, separators=(",", ":"))
