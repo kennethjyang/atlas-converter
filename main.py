@@ -3,6 +3,8 @@
 Build Pinpoint V compatible atlases from BrainGlobe-style atlases.
 """
 
+from atlas_compressor import save_annotation
+from atlas_manager import allen_mouse_atlases
 from brainglobe_atlasapi import BrainGlobeAtlas
 
 from atlas_compressor import (
@@ -26,16 +28,14 @@ def main():
     save_pinpoint_atlas_metadata_schema()
 
     # Build atlas group.
-    atlas_group: list[BrainGlobeAtlas] = [
-        BrainGlobeAtlas("allen_mouse_10um", check_latest=False)
-    ]
+    atlas_group: list[BrainGlobeAtlas] = []
 
     # Iterate through atlases.
-    # for atlas in allen_mouse_atlases():
-    #     print(f"Building {atlas.atlas_name}...")
-    #     save_annotation(atlas)
-    #     atlas_group.append(atlas)
-    #     print("\tBuilt!")
+    for atlas in allen_mouse_atlases():
+        print(f"Building {atlas.atlas_name}...")
+        save_annotation(atlas)
+        atlas_group.append(atlas)
+        print("\tBuilt!")
 
     # Get first atlas for common data.
     if len(atlas_group) == 0:
