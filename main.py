@@ -10,7 +10,6 @@ from atlas_compressor import (
     build_structure_lut,
     save_color_lut,
     save_meshes,
-    get_mesh_set,
 )
 from atlas_manager import (
     build_atlas_path,
@@ -58,7 +57,7 @@ def main():
 
     # Convert meshes.
     print("Converting meshes...")
-    save_meshes(get_mesh_set(first_atlas), build_atlas_path(first_atlas))
+    save_meshes(first_atlas, build_atlas_path(first_atlas))
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ from numpy import dtype, ndarray, searchsorted, uint16
 from pandas import Categorical
 
 # pyrefly: ignore [missing-module-attribute]
-from pymeshlab import MeshSet
+from pymeshlab import MeshSet, PyMeshLabException
 from zarr import create_array
 from zarr.codecs import BloscCodec, BloscShuffle
 
@@ -114,21 +114,6 @@ def build_structure_lut(atlas: BrainGlobeAtlas) -> StructureLut:
     return lut
 
 
-def get_mesh_set(atlas: BrainGlobeAtlas) -> MeshSet:
-    """Returns the mesh set for an atlas.
-
-    Built to follow the sorted ID order.
-
-    Args:
-        atlas: Brain Globe atlas to build the MeshSet for.
-    """
-    mesh_set = MeshSet()
-    for structure in get_sorted_structure_ids(atlas)[1:]:
-        mesh_set.load_new_mesh(str(atlas.meshfile_from_structure(structure)))
-
-    return mesh_set
-
-
 def build_color_lut(structure_lut: StructureLut) -> list[UInt8]:
     """Returns color LUT based on a structure LUT.
 
@@ -177,17 +162,24 @@ def save_color_lut(lut: list[int], atlas_directory: Path):
         f.write(bytes(lut))
 
 
-def save_meshes(mesh_set: MeshSet, atlas_directory: Path):
-    """Write a mesh set to disk as GLB with marching cube decimation.
+def save_meshes(atlas: BrainGlobeAtlas, atlas_directory: Path):
+    """Write atlases meshes to disk as GLB with marching cube decimation.
 
     Args:
-        mesh_set: MeshSet to write to disk (should be the atlas meshes).
+        atlas: BrainGlobe atlas to convert.
         atlas_directory: Output directory for this atlas.
     """
-    mesh_set.meshing_decimation_edge_collapse_for_marching_cube_meshes()
-
-    for mesh_id in range(mesh_set.number_meshes()):
-        mesh_set.set_current_mesh(mesh_id)
-        mesh_set.save_current_mesh(
-            prepare_path(atlas_directory / "meshes" / f"{mesh_id + 1}.glb")
-        )
+    for compacted_id, structure in enumerate(get_sorted_structure_ids(atlas)):
+        try:
+            print(f"Processing {structure}")
+            mesh = MeshSet()
+            mesh.load_new_mesh(str(atlas.meshfile_from_structure(structure)))
+            # mesh.meshing_decimation_edge_collapse_for_marching_cube_meshes()
+            mesh.save_current_mesh(
+                str(prepare_path(atlas_directory / "meshes" / f"{compacted_id}.glb"))
+            )
+        except (PyMeshLabException, KeyError) as e:
+            # Silently skip meshes that don't exist.
+            print(f"Skipping structure {structure}")
+            print(e)
+            continue
