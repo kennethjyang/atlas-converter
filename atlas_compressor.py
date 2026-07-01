@@ -7,9 +7,7 @@ from pathlib import Path
 from brainglobe_atlasapi import BrainGlobeAtlas
 from numpy import dtype, ndarray, searchsorted, uint16
 from pandas import Categorical
-
-# pyrefly: ignore [missing-module-attribute]
-from pymeshlab import MeshSet, PyMeshLabException
+from trimesh import load_mesh
 from zarr import create_array
 from zarr.codecs import BloscCodec, BloscShuffle
 
@@ -22,7 +20,7 @@ type Annotation = ndarray[tuple[int, int, int], dtype[uint16]]
 
 
 @lru_cache(1)
-def get_sorted_structure_ids(atlas: BrainGlobeAtlas):
+def get_sorted_structure_ids(atlas: BrainGlobeAtlas) -> list[int]:
     """Return all structure IDs in sorted order with 0 prepended.
 
     The last call is cached.
@@ -169,17 +167,22 @@ def save_meshes(atlas: BrainGlobeAtlas, atlas_directory: Path):
         atlas: BrainGlobe atlas to convert.
         atlas_directory: Output directory for this atlas.
     """
-    for compacted_id, structure in enumerate(get_sorted_structure_ids(atlas)):
-        try:
-            print(f"Processing {structure}")
-            mesh = MeshSet()
-            mesh.load_new_mesh(str(atlas.meshfile_from_structure(structure)))
-            # mesh.meshing_decimation_edge_collapse_for_marching_cube_meshes()
-            mesh.save_current_mesh(
-                str(prepare_path(atlas_directory / "meshes" / f"{compacted_id}.glb"))
-            )
-        except (PyMeshLabException, KeyError) as e:
-            # Silently skip meshes that don't exist.
-            print(f"Skipping structure {structure}")
-            print(e)
+    for compacted_id, structure in enumerate(
+        get_sorted_structure_ids(atlas)[1:], start=1
+    ):
+        # Get mesh path.
+        mesh_path = str(atlas.meshfile_from_structure(structure))
+
+        # Skip missing meshes.
+        if not Path(mesh_path).is_file():
             continue
+
+        # Load.
+        mesh = load_mesh(mesh_path)
+
+        # Apply simplification and cleanup.
+        mesh = mesh.simplify_quadric_decimation(percent=0.9)
+        mesh.process()
+
+        # Export as GLB.
+        mesh.export(prepare_path(atlas_directory / "meshes" / f"{compacted_id}.glb"))

@@ -22,12 +22,13 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "brainglobe-atlasapi" },
+    { name = "fast-simplification" },
     { name = "numpy" },
     { name = "pandas" },
     { name = "pydantic" },
-    { name = "pymeshlab" },
     { name = "pyrefly" },
     { name = "ruff" },
+    { name = "trimesh" },
     { name = "zarr" },
 ]
 
@@ -42,12 +43,13 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "brainglobe-atlasapi", specifier = ">=2.3.1" },
+    { name = "fast-simplification", specifier = ">=0.1.13" },
     { name = "numpy", specifier = ">=2.4.6" },
     { name = "pandas", specifier = ">=3.0.3" },
     { name = "pydantic", specifier = ">=2.13.4" },
-    { name = "pymeshlab", specifier = ">=2025.7.post1" },
     { name = "pyrefly", specifier = ">=1.0.0" },
     { name = "ruff", specifier = ">=0.15.16" },
+    { name = "trimesh", specifier = ">=4.12.2" },
     { name = "zarr", specifier = ">=3.2.1" },
 ]
 
@@ -174,6 +176,22 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/25/71/80cc718ff6d7abfbabacb1f57aaa42e9c1552bfdd01e64ddd704e4a03638/donfig-0.8.1.post1.tar.gz", hash = "sha256:3bef3413a4c1c601b585e8d297256d0c1470ea012afa6e8461dc28bfb7c23f52", size = 19506, upload-time = "2024-05-23T14:14:31.513Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0c/d5/c5db1ea3394c6e1732fb3286b3bd878b59507a8f77d32a2cebda7d7b7cd4/donfig-0.8.1.post1-py3-none-any.whl", hash = "sha256:2a3175ce74a06109ff9307d90a230f81215cbac9a751f4d1c6194644b8204f9d", size = 21592, upload-time = "2024-05-23T14:13:55.283Z" },
+]
+
+[[package]]
+name = "fast-simplification"
+version = "0.1.13"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e1/c7/e000571f3f271fb88b92f2bf0fbe48a12993c77cde8093c490997df46a6d/fast_simplification-0.1.13.tar.gz", hash = "sha256:5e95c966ad4ddf04b0a49013c92e5a06a3b888c6e02bb3c7ab3817fc8ba0f03f", size = 27136, upload-time = "2025-12-19T16:57:40.269Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6f/81/ea0026164dd9dbaf6904176dbc716b8361548bbff7c0a273c14e2137ed27/fast_simplification-0.1.13-cp311-abi3-macosx_10_9_x86_64.whl", hash = "sha256:4a89d1d0ecbb547528048ab6333bf2287767dbba727fa0553b18a138802d9b61", size = 225697, upload-time = "2025-12-19T16:57:31.776Z" },
+    { url = "https://files.pythonhosted.org/packages/49/1c/ea8c057ebf02a3b24eddc79619bdc1c844a2354dbdf66176d86750755846/fast_simplification-0.1.13-cp311-abi3-macosx_11_0_arm64.whl", hash = "sha256:f3bcd10b5de2a85fe41d4ba27ccdf3adc723c2a0f5a1afb47f01e95c6c158651", size = 221602, upload-time = "2025-12-19T16:57:32.941Z" },
+    { url = "https://files.pythonhosted.org/packages/34/64/4ecbf504f3207a36e7713013b473d40fb56d1b665b7d6ee80ffd3b217f81/fast_simplification-0.1.13-cp311-abi3-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:3ed45b1f07d718832aec76ae92c91ab8e84001d935055379ce0089b0cfb87870", size = 1613145, upload-time = "2025-12-19T16:57:34.13Z" },
+    { url = "https://files.pythonhosted.org/packages/8c/44/ae0b556d62ed6a8c6f290435f4764fae9944f6857171b60613ab35f0f1a7/fast_simplification-0.1.13-cp311-abi3-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:c694f0f0bbafbaf29acf7043de603b4c85259f2eae7b802d4946d47976e9959d", size = 1638154, upload-time = "2025-12-19T16:57:35.609Z" },
+    { url = "https://files.pythonhosted.org/packages/33/44/3208d9c3f76b5cadcc43b96a0db21c62926b3aa35be2cf16deb88cc7d4d1/fast_simplification-0.1.13-cp311-abi3-win_amd64.whl", hash = "sha256:94565811e708828f77c0a30eb8f05278e8f5826f2cbf1791cc470f6471dd0dce", size = 378277, upload-time = "2025-12-19T16:57:38.783Z" },
 ]
 
 [[package]]
@@ -429,21 +447,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pymeshlab"
-version = "2025.7.post1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/29/e6/68bb19ec11de2f60bc3319e0ce93aba4082ec82a6bbc03dd142f0d319585/pymeshlab-2025.7.post1-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:c9990cd5e4620fc598795baf91f1b7b37ebb65a7b87eb01beb54d37339207d46", size = 64996542, upload-time = "2026-01-30T08:41:33.604Z" },
-    { url = "https://files.pythonhosted.org/packages/65/0d/58258e56400f3a5ff9df565b4ff48616568af25aa5d8a70eb2afee467709/pymeshlab-2025.7.post1-cp314-cp314-macosx_11_0_x86_64.whl", hash = "sha256:472b7247e4ae9b9937d9a13bfb78b9e6e777b805ae20a114101f9dcc15bea8fc", size = 54507346, upload-time = "2026-01-30T08:41:36.517Z" },
-    { url = "https://files.pythonhosted.org/packages/ac/01/b26a8c0d70a76fc333a620ce1ee7b11f8ab4b3791306350e28a578dcb47f/pymeshlab-2025.7.post1-cp314-cp314-manylinux_2_35_aarch64.whl", hash = "sha256:de6468bf43d5eeb23cdac78fe30286694ff5ad6d349a9bfa44584ac7e434e054", size = 65417867, upload-time = "2026-01-30T08:41:39.434Z" },
-    { url = "https://files.pythonhosted.org/packages/79/c0/9b769a1acd7ce4405059820793c2f14129d9faba99b595ea35c8c9d8c57d/pymeshlab-2025.7.post1-cp314-cp314-manylinux_2_35_x86_64.whl", hash = "sha256:951fe5aeb3e92632f3db3a1a6525279b41e5d7191c6b9011429dbb0b67f2f0d3", size = 106572030, upload-time = "2026-01-30T08:41:43.909Z" },
-    { url = "https://files.pythonhosted.org/packages/3e/f0/65e3b96a14e9c80e05c085f8b32b923ccd5a70acf63eb66528e3fa94cf54/pymeshlab-2025.7.post1-cp314-cp314-win_amd64.whl", hash = "sha256:881389fb62ac832c81555fe22a3990a81624deb78e78ca3862836075d5c62c2b", size = 56595688, upload-time = "2026-01-30T08:41:47.145Z" },
-]
-
-[[package]]
 name = "pyrefly"
 version = "1.1.1"
 source = { registry = "https://pypi.org/simple" }
@@ -615,6 +618,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/7a/31/145bdbee73d7ee4ac4e879c37faa196a32208b288ca4f308c1ad8db3f010/treelib-1.8.0.tar.gz", hash = "sha256:e1be2c6b66ffbfae85079fc4c76fb4909946d01d915ee29ff6795de53aed5d55", size = 28607, upload-time = "2025-06-29T15:06:49.293Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2e/24/32361f5d0e2eff7ff1881ac6833b6b090cfe34515b1ee9082636cbe69442/treelib-1.8.0-py3-none-any.whl", hash = "sha256:5235d1ebf988c5026f26ce6e5e0cd470007f16d4978185f5c9b3eee8a25aef81", size = 30728, upload-time = "2025-06-29T15:06:48.248Z" },
+]
+
+[[package]]
+name = "trimesh"
+version = "4.12.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/79/37/5cb90f04990260d2caceb6093560c6cefafca1ec522c1e43be01ca658244/trimesh-4.12.2.tar.gz", hash = "sha256:c8ca31571ac00b112e4e160e66a2d4c3491df321f056bd33806be0485d1af9d9", size = 842220, upload-time = "2026-05-01T00:57:43.333Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/05/98/716a473cfb24750858ddd5d14e6527539dd206583a46408d08eeb2844a75/trimesh-4.12.2-py3-none-any.whl", hash = "sha256:b5b5afa63c5272345f2858f7676bc8c217dc8a89f4fadf6193fe10a81b5ff2aa", size = 741043, upload-time = "2026-05-01T00:57:40.763Z" },
 ]
 
 [[package]]

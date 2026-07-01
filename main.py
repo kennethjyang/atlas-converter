@@ -26,7 +26,9 @@ def main():
     save_pinpoint_atlas_metadata_schema()
 
     # Build atlas group.
-    atlas_group: list[BrainGlobeAtlas] = [BrainGlobeAtlas("allen_mouse_10um")]
+    atlas_group: list[BrainGlobeAtlas] = [
+        BrainGlobeAtlas("allen_mouse_10um", check_latest=False)
+    ]
 
     # Iterate through atlases.
     # for atlas in allen_mouse_atlases():

@@ -24,7 +24,7 @@ def all_atlases() -> Iterator[BrainGlobeAtlas]:
     """Return all atlases."""
     yield from (
         # pyrefly: ignore [bad-argument-type]
-        BrainGlobeAtlas(atlas, check_latest=True)
+        BrainGlobeAtlas(atlas)
         for atlas in get_all_atlas_names_sorted()
     )
 
@@ -33,7 +33,7 @@ def allen_mouse_atlases() -> Iterator[BrainGlobeAtlas]:
     """Return only Allen CCF Mouse atlases."""
     yield from (
         # pyrefly: ignore [bad-argument-type]
-        BrainGlobeAtlas(f"allen_mouse_{resolution}um", check_latest=True)
+        BrainGlobeAtlas(f"allen_mouse_{resolution}um")
         for resolution in [10, 25, 50, 100]
     )
 
