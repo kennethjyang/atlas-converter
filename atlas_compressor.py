@@ -182,6 +182,7 @@ def save_meshes(atlas: BrainGlobeAtlas, atlas_directory: Path):
 
         # Apply simplification and cleanup.
         mesh = mesh.simplify_quadric_decimation(percent=0.9)
+        mesh.apply_scale(0.001)
         mesh.process()
 
         # Export as GLB.

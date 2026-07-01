@@ -43,8 +43,10 @@ def main():
     first_atlas = atlas_group[0]
 
     # Compute structures and color LUTs.
+    print("Building LUTs...")
     structure_lut = build_structure_lut(first_atlas)
     color_lut = build_color_lut(structure_lut)
+    print("\tBuilt!")
 
     # Build and save atlas metadata for group.
     save_pinpoint_atlas_metadata(
@@ -60,6 +62,7 @@ def main():
     # Convert meshes.
     print("Converting meshes...")
     save_meshes(first_atlas, build_atlas_path(first_atlas))
+    print("\tConverted!")
 
 
 if __name__ == "__main__":

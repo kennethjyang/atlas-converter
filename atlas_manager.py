@@ -31,10 +31,18 @@ def all_atlases() -> Iterator[BrainGlobeAtlas]:
 
 def allen_mouse_atlases() -> Iterator[BrainGlobeAtlas]:
     """Return only Allen CCF Mouse atlases."""
+    atlas_resolutions = [10, 25, 50, 100]
+
+    # Skip downloading if all atlases are already available locally.
+    skip_check_latest = not all(
+        f"allen_mouse_{resolution}um" in list_atlases.get_downloaded_atlases()
+        for resolution in atlas_resolutions
+    )
+
     yield from (
         # pyrefly: ignore [bad-argument-type]
-        BrainGlobeAtlas(f"allen_mouse_{resolution}um")
-        for resolution in [10, 25, 50, 100]
+        BrainGlobeAtlas(f"allen_mouse_{resolution}um", check_latest=skip_check_latest)
+        for resolution in atlas_resolutions
     )
 
 
