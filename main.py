@@ -7,8 +7,8 @@ from pathlib import Path
 from typing import Annotated
 
 from brainglobe_atlasapi import BrainGlobeAtlas
-from typer import Argument, Typer
 from rich.progress import Progress
+from typer import Argument, Typer
 
 from atlas_compressor import (
     build_color_lut,
