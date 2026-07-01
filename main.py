@@ -3,17 +3,17 @@
 Build Pinpoint V compatible atlases from BrainGlobe-style atlases.
 """
 
-from atlas_compressor import save_annotation
-from atlas_manager import allen_mouse_atlases
 from brainglobe_atlasapi import BrainGlobeAtlas
 
 from atlas_compressor import (
     build_color_lut,
     build_structure_lut,
+    save_annotation,
     save_color_lut,
     save_meshes,
 )
 from atlas_manager import (
+    allen_mouse_atlases,
     build_atlas_path,
     build_pinpoint_atlas_metadata,
     save_pinpoint_atlas_metadata,
