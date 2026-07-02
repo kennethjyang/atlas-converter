@@ -1,7 +1,8 @@
 """Annotation compression operations."""
 
-from functools import lru_cache
+from functools import lru_cache, partial
 from math import ceil, sqrt
+from multiprocessing.pool import Pool
 from pathlib import Path
 
 from brainglobe_atlasapi import BrainGlobeAtlas
@@ -171,6 +172,26 @@ def save_color_lut(lut: list[int], atlas_path: Path):
         f.write(bytes(lut))
 
 
+def _convert_mesh(item: tuple[int, str], atlas_path: Path):
+    # Extract mesh info.
+    compacted_id, mesh_path = item
+
+    # Skip missing meshes.
+    if not Path(mesh_path).is_file():
+        return
+
+    # Load.
+    mesh = load_mesh(mesh_path)
+
+    # Apply simplification and cleanup.
+    mesh = mesh.simplify_quadric_decimation(percent=0.9)
+    mesh.apply_scale(0.001)
+    mesh.process()
+
+    # Export as GLB.
+    mesh.export(prepare_path(atlas_path / "meshes" / f"{compacted_id}.glb"))
+
+
 def save_meshes(atlas: BrainGlobeAtlas, atlas_path: Path):
     """Write atlases meshes to disk as GLB with marching cube decimation.
 
@@ -178,28 +199,23 @@ def save_meshes(atlas: BrainGlobeAtlas, atlas_path: Path):
         atlas: BrainGlobe atlas to convert.
         atlas_path: Output directory for this atlas.
     """
-    for compacted_id, structure in enumerate(
-        track(
-            get_sorted_structure_ids(atlas)[1:],
-            description="Converting meshes...",
-            transient=True,
-        ),
-        start=1,
-    ):
-        # Get mesh path.
-        mesh_path = str(atlas.meshfile_from_structure(structure))
+    items = list(
+        enumerate(
+            (
+                str(atlas.meshfile_from_structure(structure))
+                for structure in get_sorted_structure_ids(atlas)[1:]
+            ),
+            start=1,
+        )
+    )
+    convert = partial(_convert_mesh, atlas_path=atlas_path)
 
-        # Skip missing meshes.
-        if not Path(mesh_path).is_file():
-            continue
-
-        # Load.
-        mesh = load_mesh(mesh_path)
-
-        # Apply simplification and cleanup.
-        mesh = mesh.simplify_quadric_decimation(percent=0.9)
-        mesh.apply_scale(0.001)
-        mesh.process()
-
-        # Export as GLB.
-        mesh.export(prepare_path(atlas_path / "meshes" / f"{compacted_id}.glb"))
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        TimeElapsedColumn(),
+        transient=True,
+    ) as progress:
+        progress.add_task("Converting Meshes...", total=None)
+        with Pool() as pool:
+            pool.map(convert, items, chunksize=4)
