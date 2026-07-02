@@ -3,6 +3,7 @@
 Operations related to exposing access to Brain Globe atlases.
 """
 
+from functools import cache
 from json import dump
 from pathlib import Path
 from typing import Iterator
@@ -15,6 +16,7 @@ from models import PinpointAtlasMetadata, StructureLut
 """Brain Globe atlas loading."""
 
 
+@cache
 def get_all_atlas_names_sorted() -> list[str]:
     """Returns sorted list of all latest BrainGlobe atlas names. Cached to avoid re-fetching."""
     return sorted(list_atlases.get_all_atlases_lastversions().keys())
@@ -29,7 +31,8 @@ def all_atlases() -> Iterator[BrainGlobeAtlas]:
     )
 
 
-def allen_mouse_atlases() -> Iterator[BrainGlobeAtlas]:
+@cache
+def allen_mouse_atlases() -> list[BrainGlobeAtlas]:
     """Return only Allen CCF Mouse atlases."""
     atlas_resolutions = [10, 25, 50, 100]
 
@@ -39,11 +42,11 @@ def allen_mouse_atlases() -> Iterator[BrainGlobeAtlas]:
         for resolution in atlas_resolutions
     )
 
-    yield from (
+    return [
         # pyrefly: ignore [bad-argument-type]
         BrainGlobeAtlas(f"allen_mouse_{resolution}um", check_latest=skip_check_latest)
         for resolution in atlas_resolutions
-    )
+    ]
 
 
 """Pinpoint Atlas metadata creation."""

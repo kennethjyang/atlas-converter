@@ -83,7 +83,9 @@ def build_structure_lut(atlas: BrainGlobeAtlas) -> StructureLut:
 
     # Get all structure IDs and skip the 0-index one.
     ids = get_sorted_structure_ids(atlas)
-    for structure_id in track(ids[1:], description="Building structure LUT..."):
+    for structure_id in track(
+        ids[1:], description="Building structure LUT...", transient=True
+    ):
         # Get the structure data.
         structure_data = atlas.structures[structure_id]
         # pyrefly: ignore [bad-argument-type]
@@ -120,7 +122,9 @@ def build_color_lut(structure_lut: StructureLut) -> list[UInt8]:
         structure_lut: Structure LUT to build the color LUT from.
     """
     lut = [0, 0, 0, 255]
-    for structure in track(structure_lut[1:], description="Building color LUT..."):
+    for structure in track(
+        structure_lut[1:], description="Building color LUT...", transient=True
+    ):
         lut.extend([*structure.color, 255])
 
     return lut
@@ -175,7 +179,11 @@ def save_meshes(atlas: BrainGlobeAtlas, atlas_path: Path):
         atlas_path: Output directory for this atlas.
     """
     for compacted_id, structure in enumerate(
-        track(get_sorted_structure_ids(atlas)[1:], description="Converting meshes..."),
+        track(
+            get_sorted_structure_ids(atlas)[1:],
+            description="Converting meshes...",
+            transient=True,
+        ),
         start=1,
     ):
         # Get mesh path.
