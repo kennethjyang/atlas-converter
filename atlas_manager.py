@@ -6,6 +6,7 @@ Operations related to exposing access to Brain Globe atlases.
 from functools import cache
 from json import dump
 from pathlib import Path
+from tomllib import load
 from typing import Iterator
 
 from brainglobe_atlasapi import list_atlases
@@ -19,7 +20,7 @@ from models import PinpointAtlasMetadata, StructureLut
 @cache
 def get_all_atlas_names_sorted() -> list[str]:
     """Returns sorted list of all latest BrainGlobe atlas names. Cached to avoid re-fetching."""
-    return sorted(list_atlases.get_atlases_lastversions().keys())
+    return sorted(list_atlases.get_all_atlases_lastversions().keys())
 
 
 def get_all_atlas_names_sorted_from(custom_path: Path) -> list[str]:
@@ -92,6 +93,12 @@ def allen_mouse_atlases() -> Iterator[BrainGlobeAtlas]:
 """Pinpoint Atlas metadata creation."""
 
 
+def get_converter_version() -> str:
+    """Return the version of the converter as specified in the pyproject.toml file."""
+    with open(Path(__file__).parent / "pyproject.toml", "rb") as f:
+        return load(f)["project"]["version"]
+
+
 def build_pinpoint_atlas_metadata(
     group: list[BrainGlobeAtlas], structure_lut: StructureLut
 ) -> PinpointAtlasMetadata:
@@ -115,6 +122,7 @@ def build_pinpoint_atlas_metadata(
     # Build output.
     return PinpointAtlasMetadata(
         name=first_atlas.metadata["name"],
+        converter_version=get_converter_version(),
         resolutions=[atlas.metadata["resolution"][0] for atlas in group],
         root_id=first_atlas.hierarchy.root,
         structures=structure_lut,

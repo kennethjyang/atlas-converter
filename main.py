@@ -5,11 +5,11 @@ Build Pinpoint V compatible atlases from BrainGlobe-style atlases.
 
 from itertools import groupby
 from pathlib import Path
-from typing import Annotated, Iterator
+from typing import Annotated, Iterator, Optional
 
 from brainglobe_atlasapi import BrainGlobeAtlas
 from rich.progress import Progress
-from typer import Argument, Typer
+from typer import Argument, Exit, Option, Typer
 
 from atlas_compressor import (
     build_color_lut,
@@ -28,6 +28,7 @@ from atlas_manager import (
     get_all_allen_mouse_names_sorted,
     get_all_atlas_names_sorted,
     get_all_atlas_names_sorted_from,
+    get_converter_version,
     save_pinpoint_atlas_metadata,
     save_pinpoint_atlas_metadata_schema,
 )
@@ -143,6 +144,27 @@ def mouse(
         len(get_all_allen_mouse_names_sorted()),
         converted_atlases_path,
     )
+
+
+def print_version_callback(do_it: bool):
+    """Callback to print the version and exit from CLI.
+
+    Args:
+        do_it: Flag to do the printing.
+    """
+    if do_it:
+        print(get_converter_version())
+        raise Exit()
+
+
+@app.callback()
+def callback(
+    version: Annotated[
+        Optional[bool],
+        Option("--version", callback=print_version_callback, is_eager=True),
+    ] = None,
+):
+    """Tool to convert BrainGlobe formatted atlases into Pinpoint V compatible atlases."""
 
 
 if __name__ == "__main__":
