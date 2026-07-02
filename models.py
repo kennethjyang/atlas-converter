@@ -9,9 +9,7 @@ from pydantic import AfterValidator, BaseModel, Field
 StructureId = Annotated[int, Field(gt=0, lt=1 << 16)]
 
 # Unsigned byte integer.
-UInt8 = Annotated[
-    int, Field(ge=0, le=255), AfterValidator(lambda value: max(0, min(255, value)))
-]
+UInt8 = Annotated[int, AfterValidator(lambda value: max(0, min(255, value)))]
 
 # Structure LUT which will start with None to indicate "empty" space.
 type StructureLut = tuple[AtlasStructure, ...]
