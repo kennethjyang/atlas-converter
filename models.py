@@ -6,12 +6,12 @@ from typing import Annotated, Optional
 from pydantic import AfterValidator, BaseModel, Field
 
 # Remapped structure ID (should be in the range of an unsigned short)
-StructureId = Annotated[int, Field(gt=0, lt=1 << 16)]
+StructureId = Annotated[int, Field(ge=0, lt=1 << 16)]
 
 # Unsigned byte integer.
 UInt8 = Annotated[int, AfterValidator(lambda value: max(0, min(255, value)))]
 
-# Structure LUT which will start with None to indicate "empty" space.
+# Structure LUT is an ID ordered list of structures.
 type StructureLut = tuple[AtlasStructure, ...]
 
 
@@ -50,10 +50,10 @@ def ensure_sorted_and_unique(value: tuple[float, ...]) -> tuple[float, ...]:
     return tuple(sorted(value))
 
 
-def ensure_starts_with_empty_structure_and_unique(
+def ensure_unique_structures(
     value: StructureLut,
 ) -> StructureLut:
-    """Ensures the structure LUT is sorted and has no duplicates.
+    """Ensures the structure LUT has no duplicates.
 
     Args:
         value: A structure LUT to verify.
@@ -62,13 +62,9 @@ def ensure_starts_with_empty_structure_and_unique(
         Validated structure LUT.
 
     Raises:
-        ValueError: If the LUT is empty, does not contain exactly 1 empty structure only at the start, or has duplicates.
+        ValueError: If the LUT has duplicates.
     """
-    if len(value) == 0:
-        raise ValueError("LUT must have values!")
-    elif value[0].name != "empty":
-        raise ValueError("LUT must start with empty structure!")
-    elif len(set(value)) != len(value):
+    if len(set(value)) != len(value):
         positions = defaultdict(list)
         for index, structure in enumerate(value):
             positions[structure].append(index)
@@ -95,7 +91,7 @@ class PinpointAtlasMetadata(BaseModel, frozen=True):
     """
 
     name: Annotated[str, Field(min_length=1)]
-    converter_version: str
+    converter_version: Annotated[str, Field(min_length=1)]
     resolutions: Annotated[
         tuple[float, ...], Field(min_length=1), AfterValidator(ensure_sorted_and_unique)
     ]
@@ -103,5 +99,5 @@ class PinpointAtlasMetadata(BaseModel, frozen=True):
     structures: Annotated[
         StructureLut,
         Field(min_length=1),
-        AfterValidator(ensure_starts_with_empty_structure_and_unique),
+        AfterValidator(ensure_unique_structures),
     ]
