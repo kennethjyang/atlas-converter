@@ -3,6 +3,7 @@
 Build Pinpoint V compatible atlases from BrainGlobe-style atlases.
 """
 
+from itertools import groupby
 from pathlib import Path
 from typing import Annotated, Iterator
 
@@ -45,7 +46,7 @@ def convert(
     """Convert atlases from an iterator and put them into the specified converted atlases' directory.
 
     Args:
-        atlases: Generator that yields BrainGlobe atlases.
+        atlases: Iterator that yields BrainGlobe atlases.
         atlas_count: Total number of atlases from the generator.
         converted_atlases_path: Output directory and root for all atlases and atlas schema.
     """
@@ -53,52 +54,46 @@ def convert(
     # Write the metadata schema.
     save_pinpoint_atlas_metadata_schema(converted_atlases_path)
 
-    # Remember seen atlas groups (to detect when to switch groups).
-    groups: set[str] = set()
-
-    # Current atlas group data.
-    group: list[BrainGlobeAtlas] = []
-
     # Iterate through all BrainGlobe atlases.
     with Progress() as progress:
         task = progress.add_task("Converting BrainGlobe atlases...", total=atlas_count)
-        for index, atlas in enumerate(atlases):
-            # If this is the first atlas in a group or the very last one, finish off the previous group.
-            atlas_group_name = atlas.metadata["name"]
-            atlas_path = build_atlas_path(atlas_group_name, converted_atlases_path)
-            if atlas_group_name not in groups or index == atlas_count - 1:
-                # Create group if this was the last and only one.
-                if len(group) == 0 and index == atlas_count - 1:
-                    group = [atlas]
 
-                # Finish the previous group.
-                if len(group) > 0:
-                    # Build LUTs.
-                    structure_lut = build_structure_lut(atlas)
-                    color_lut = build_color_lut(structure_lut)
+        for group_name, group_iterator in groupby(
+            atlases, key=lambda lambda_atlas: lambda_atlas.metadata["name"]
+        ):
+            # Build output path for atlas.
+            atlas_path = build_atlas_path(group_name, converted_atlases_path)
 
-                    # Save metadata.
-                    save_pinpoint_atlas_metadata(
-                        build_pinpoint_atlas_metadata(group, structure_lut), atlas_path
-                    )
+            # Get all atlases in the group.
+            group = list(group_iterator)
 
-                    # Save color LUT.
-                    save_color_lut(color_lut, atlas_path)
+            # Compress annotations and track group.
+            for atlas in group[:-1]:
+                save_annotation(atlas, atlas_path)
+                progress.advance(task)
 
-                    # Save meshes.
-                    save_meshes(atlas, atlas_path)
+            # Get last atlas.
+            last_atlas = group[-1]
 
-                    # Reset current group.
-                    group.clear()
+            # Compress the last atlas and track progress after group finishes.
+            save_annotation(last_atlas, atlas_path)
 
-                # Add self to processed groups.
-                groups.add(atlas_group_name)
+            # Build LUTs
+            structure_lut = build_structure_lut(last_atlas)
+            color_lut = build_color_lut(structure_lut)
 
-            # Compress annotation.
-            save_annotation(atlas, atlas_path)
+            # Save metadata.
+            save_pinpoint_atlas_metadata(
+                build_pinpoint_atlas_metadata(group, structure_lut), atlas_path
+            )
 
-            # Save to group.
-            group.append(atlas)
+            # Save color LUT.
+            save_color_lut(color_lut, atlas_path)
+
+            # Save meshes.
+            save_meshes(last_atlas, atlas_path)
+
+            # Finish the group.
             progress.advance(task)
 
 
@@ -124,7 +119,7 @@ def custom(
         Argument(help="Output directory and root for all atlases and atlas schema."),
     ] = build_default_converted_atlases_path(),
 ):
-    """Convert all BrainGlobe atlases."""
+    """Convert all BrainGlobe formatted atlases found a specified directory."""
     convert(
         custom_atlases(custom_atlases_path),
         len(get_all_atlas_names_sorted_from(custom_atlases_path)),
