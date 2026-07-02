@@ -55,6 +55,7 @@ def print_version_callback(do_it: bool):
         raise Exit()
 
 
+# noinspection PyUnusedLocal
 @app.callback()
 def callback(
     version: Annotated[
