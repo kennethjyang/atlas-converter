@@ -11,7 +11,9 @@ from typing import Iterator
 
 from brainglobe_atlasapi import list_atlases
 from brainglobe_atlasapi.bg_atlas import BrainGlobeAtlas
+from numpy import searchsorted
 
+from atlas_compressor import get_sorted_structure_ids
 from models import PinpointAtlasMetadata, StructureLut
 
 """Brain Globe atlas loading."""
@@ -124,7 +126,11 @@ def build_pinpoint_atlas_metadata(
         name=first_atlas.metadata["name"],
         converter_version=get_converter_version(),
         resolutions=[atlas.metadata["resolution"][0] for atlas in group],
-        root_id=first_atlas.hierarchy.root,
+        root_id=int(
+            searchsorted(
+                get_sorted_structure_ids(first_atlas), first_atlas.hierarchy.root
+            )
+        ),
         structures=structure_lut,
     )
 
