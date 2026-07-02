@@ -71,7 +71,7 @@ def build_structure_lut(atlas: BrainGlobeAtlas) -> StructureLut:
         atlas: Brain Globe atlas to build the Structure LUT for.
     """
     # Initialize the LUT with the empty structure.
-    lut: StructureLut = [
+    lut: list[AtlasStructure] = [
         AtlasStructure(
             name="empty",
             acronym=" ",
@@ -112,7 +112,7 @@ def build_structure_lut(atlas: BrainGlobeAtlas) -> StructureLut:
             )
         )
 
-    return lut
+    return tuple(lut)
 
 
 def build_color_lut(structure_lut: StructureLut) -> list[UInt8]:
