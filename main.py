@@ -67,6 +67,10 @@ def convert(
             atlas_group_name = atlas.metadata["name"]
             atlas_path = build_atlas_path(atlas_group_name, converted_atlases_path)
             if atlas_group_name not in groups or index == atlas_count - 1:
+                # Create group if this was the last and only one.
+                if len(group) == 0 and index == atlas_count - 1:
+                    group = [atlas]
+
                 # Finish the previous group.
                 if len(group) > 0:
                     # Build LUTs.
