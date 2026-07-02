@@ -121,17 +121,6 @@ def prepare_path(file: Path) -> Path:
     return file
 
 
-def save_pinpoint_atlas_metadata(metadata: PinpointAtlasMetadata, atlas_path: Path):
-    """Write Pinpoint Atlas metadata to disk.
-
-    Creates folders if needed.
-
-    Args:
-        metadata: Pinpoint Atlas metadata to write.
-        atlas_path: Output directory for this atlas.
-    """
-
-
 def save_pinpoint_atlas_metadata_schema(converted_atlases_path: Path):
     """Write Pinpoint Atlas model schema file to output root.
 

@@ -119,7 +119,14 @@ def convert(
             # Compress annotations.
             save_annotation(first_atlas, atlas_path)
 
-            # Compress annotations and track group.
+            # Extract root ID.
+            root_id = int(
+                searchsorted(
+                    get_sorted_structure_ids(first_atlas), first_atlas.hierarchy.root
+                )
+            )
+
+            # Compress annotations and track resolutions.
             for atlas in group_iterator:
                 save_annotation(atlas, atlas_path)
                 resolutions.append(atlas.metadata["resolution"][0])
@@ -130,12 +137,7 @@ def convert(
                 name=group_name,
                 converter_version=get_converter_version(),
                 resolutions=resolutions,
-                root_id=int(
-                    searchsorted(
-                        get_sorted_structure_ids(first_atlas),
-                        first_atlas.hierarchy.root,
-                    )
-                ),
+                root_id=root_id,
                 structures=structure_lut,
             )
             with open(prepare_path(atlas_path / "atlas.json"), "w") as f:
