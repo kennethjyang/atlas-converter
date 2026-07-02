@@ -19,34 +19,74 @@ from models import PinpointAtlasMetadata, StructureLut
 @cache
 def get_all_atlas_names_sorted() -> list[str]:
     """Returns sorted list of all latest BrainGlobe atlas names. Cached to avoid re-fetching."""
-    return sorted(list_atlases.get_all_atlases_lastversions().keys())
+    return sorted(list_atlases.get_atlases_lastversions().keys())
+
+
+def get_all_atlas_names_sorted_from(custom_path: Path) -> list[str]:
+    """Returns sorted list of all assumed BrainGlobe atlases in the specified directory.
+
+    Atlas directories in the custom path are expected to follow the BrainGlobe naming convention.
+
+    Args:
+        custom_path: Path to custom atlas store directory.
+    """
+    return sorted(
+        [
+            directory.name.rsplit("_", 1)[0]
+            for directory in custom_path.iterdir()
+            if directory.is_dir()
+        ]
+    )
+
+
+def get_all_allen_mouse_names_sorted() -> list[str]:
+    """Returns sorted list of all Allen CCF Mouse atlas names."""
+    return [f"allen_mouse_{resolution}um" for resolution in [100, 10, 25, 50]]
 
 
 def all_atlases() -> Iterator[BrainGlobeAtlas]:
     """Return all atlases."""
     yield from (
         # pyrefly: ignore [bad-argument-type]
-        BrainGlobeAtlas(atlas)
-        for atlas in get_all_atlas_names_sorted()
+        BrainGlobeAtlas(atlas_name)
+        for atlas_name in get_all_atlas_names_sorted()
     )
 
 
-@cache
-def allen_mouse_atlases() -> list[BrainGlobeAtlas]:
-    """Return only Allen CCF Mouse atlases."""
-    atlas_resolutions = [10, 25, 50, 100]
+def custom_atlases(custom_path: Path) -> Iterator[BrainGlobeAtlas]:
+    """Return atlases in a custom directory.
 
+    Will continue show an exception for an erroneous atlas, but will not prevent the generator from continuing.
+
+    Args:
+        custom_path: Path to custom atlas store directory.
+    """
+    for atlas_name in get_all_atlas_names_sorted_from(custom_path):
+        try:
+            yield BrainGlobeAtlas(
+                # pyrefly: ignore [bad-argument-type]
+                atlas_name,
+                brainglobe_dir=custom_path,
+                check_latest=False,
+            )
+        except Exception as e:
+            # Notify broken custom atlas, but don't stop the process.
+            print(e)
+
+
+def allen_mouse_atlases() -> Iterator[BrainGlobeAtlas]:
+    """Return only Allen CCF Mouse atlases."""
     # Skip downloading if all atlases are already available locally.
     skip_check_latest = not all(
-        f"allen_mouse_{resolution}um" in list_atlases.get_downloaded_atlases()
-        for resolution in atlas_resolutions
+        atlas in list_atlases.get_downloaded_atlases()
+        for atlas in get_all_allen_mouse_names_sorted()
     )
 
-    return [
+    yield from (
         # pyrefly: ignore [bad-argument-type]
-        BrainGlobeAtlas(f"allen_mouse_{resolution}um", check_latest=skip_check_latest)
-        for resolution in atlas_resolutions
-    ]
+        BrainGlobeAtlas(atlas_name, check_latest=skip_check_latest)
+        for atlas_name in get_all_allen_mouse_names_sorted()
+    )
 
 
 """Pinpoint Atlas metadata creation."""
