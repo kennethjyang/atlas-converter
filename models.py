@@ -86,12 +86,14 @@ class PinpointAtlasMetadata(BaseModel):
 
     Attributes:
         name: Name of the atlas by specimen.
+        converter_version: Version number of the converter used to build this atlas.
         resolutions: Supported resolutions in sorted order.
         root_id: ID of the root structure.
         structures: Ordered list of structures in the atlas where the index is the structure ID. ID 0 is empty space.
     """
 
     name: Annotated[str, Field(min_length=1)]
+    converter_version: str
     resolutions: Annotated[
         list[float], Field(min_length=1), AfterValidator(ensure_sorted_and_unique)
     ]
