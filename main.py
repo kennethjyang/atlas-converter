@@ -3,6 +3,9 @@
 Build Pinpoint V compatible atlases from BrainGlobe-style atlases.
 """
 
+
+from atlas_manager import get_all_atlas_names_sorted
+from atlas_manager import all_atlases
 from pathlib import Path
 from typing import Annotated
 
@@ -90,7 +93,26 @@ def brainglobe(
     # Write the metadata schema.
     save_pinpoint_atlas_metadata_schema(converted_atlases_path)
 
+    # Remember seen atlas groups (to detect when to switch groups).
+    groups = set()
+
+    # Current atlas group data.
+    # group: list[BrainGlobeAtlas] = []
+
     # Iterate through all BrainGlobe atlases.
+    with Progress() as progress:
+        task = progress.add_task(
+            "Converting BrainGlobe atlases...", total=len(get_all_atlas_names_sorted())
+        )
+        for atlas in all_atlases():
+            # If this is the first atlas in a group, compute the common structures.
+            atlas_group_name = atlas.metadata["name"]
+            if atlas_group_name not in groups:
+                # structure_lut = build_structure_lut(atlas)
+                # color_lut = build_color_lut(structure_lut)
+                # Remember that the group has been processed.
+                groups.add(atlas_group_name)
+            progress.advance(task)
 
 
 if __name__ == "__main__":
