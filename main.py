@@ -1,6 +1,6 @@
-"""Atlas converter pipeline for Pinpoint V
+"""Atlas conversion pipeline for Pinpoint V
 
-Build Pinpoint V compatible atlases from BrainGlobe-style atlases.
+andles CLI, commands, and conversion pipeline.
 """
 
 from itertools import groupby
@@ -63,7 +63,7 @@ def callback(
         Option("--version", callback=print_version_callback, is_eager=True),
     ] = None,
 ):
-    """Tool to convert BrainGlobe formatted atlases into Pinpoint V compatible atlases."""
+    """Tool to convert BrainGlobe-formatted atlases into Pinpoint V-compatible atlases."""
 
 
 def convert(
