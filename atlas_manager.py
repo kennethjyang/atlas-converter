@@ -6,13 +6,12 @@ Operations related to exposing access to Brain Globe atlases.
 from functools import cache
 from json import dump
 from pathlib import Path
-from tomllib import load
 from typing import Iterator
 
 from brainglobe_atlasapi import list_atlases
 from brainglobe_atlasapi.bg_atlas import BrainGlobeAtlas
 
-from models import PinpointAtlasMetadata, StructureLut
+from models import PinpointAtlasMetadata
 
 """Brain Globe atlas loading."""
 
@@ -90,45 +89,6 @@ def allen_mouse_atlases() -> Iterator[BrainGlobeAtlas]:
     )
 
 
-"""Pinpoint Atlas metadata creation."""
-
-
-def get_converter_version() -> str:
-    """Return the version of the converter as specified in the pyproject.toml file."""
-    with open(Path(__file__).parent / "pyproject.toml", "rb") as f:
-        return load(f)["project"]["version"]
-
-
-def build_pinpoint_atlas_metadata(
-    group: list[BrainGlobeAtlas], structure_lut: StructureLut
-) -> PinpointAtlasMetadata:
-    """Return Pinpoint Atlas metadata for a given atlas group.
-
-    Args:
-        group: Group of BrainGlobe atlases to build a Pinpoint Atlas definition for.
-        structure_lut: Atlas structure LUT.
-    Raises:
-        ValueError: If the atlas group does not have a root node in the hierarchy.
-    """
-    # Extract first atlas for shared values.
-    first_atlas = group[0]
-
-    # Raise error of atlas doesn't have root.
-    if first_atlas.hierarchy.root is None:
-        raise ValueError(
-            f'Root for atlas "{first_atlas.metadata["name"]}" not found in hierarchy!'
-        )
-
-    # Build output.
-    return PinpointAtlasMetadata(
-        name=first_atlas.metadata["name"],
-        converter_version=get_converter_version(),
-        resolutions=[atlas.metadata["resolution"][0] for atlas in group],
-        root_id=first_atlas.hierarchy.root,
-        structures=structure_lut,
-    )
-
-
 """File I/O."""
 
 
@@ -159,19 +119,6 @@ def prepare_path(file: Path) -> Path:
     """
     file.parent.mkdir(parents=True, exist_ok=True)
     return file
-
-
-def save_pinpoint_atlas_metadata(metadata: PinpointAtlasMetadata, atlas_path: Path):
-    """Write Pinpoint Atlas metadata to disk.
-
-    Creates folders if needed.
-
-    Args:
-        metadata: Pinpoint Atlas metadata to write.
-        atlas_path: Output directory for this atlas.
-    """
-    with open(prepare_path(atlas_path / "atlas.json"), "w") as f:
-        f.write(metadata.model_dump_json())
 
 
 def save_pinpoint_atlas_metadata_schema(converted_atlases_path: Path):

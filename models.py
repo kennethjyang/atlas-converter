@@ -1,20 +1,21 @@
 """Data models and validation methods."""
 
-from typing import Annotated, Any, Optional, override
+from collections import defaultdict
+from typing import Annotated, Optional
 
 from pydantic import AfterValidator, BaseModel, Field
 
 # Remapped structure ID (should be in the range of an unsigned short)
-StructureId = Annotated[int, Field(gt=0, lt=1 << 16)]
+StructureId = Annotated[int, Field(ge=0, lt=1 << 16)]
 
 # Unsigned byte integer.
-UInt8 = Annotated[int, Field(ge=0, le=255)]
+UInt8 = Annotated[int, AfterValidator(lambda value: max(0, min(255, value)))]
 
-# Structure LUT which will start with None to indicate "empty" space.
-type StructureLut = list[AtlasStructure]
+# Structure LUT is an ID ordered list of structures.
+type StructureLut = tuple[AtlasStructure, ...]
 
 
-class AtlasStructure(BaseModel):
+class AtlasStructure(BaseModel, frozen=True):
     """Structure description.
 
     Attributes:
@@ -28,60 +29,57 @@ class AtlasStructure(BaseModel):
     name: Annotated[str, Field(min_length=1)]
     acronym: Annotated[str, Field(min_length=1)]
     parent_id: Optional[StructureId]
-    children_ids: set[StructureId]
-    color: Annotated[list[UInt8], Field(min_length=3, max_length=3)]
-
-    def __hash__(self) -> int:
-        return hash(self.name)
-
-    @override
-    def __eq__(self, other: Any) -> bool:
-        if isinstance(other, AtlasStructure):
-            return self.name == other.name
-        return False
+    children_ids: frozenset[StructureId]
+    color: tuple[UInt8, UInt8, UInt8]
 
 
-def ensure_sorted_and_unique(value: list[float]) -> list[float]:
-    """Ensures the list is sorted and has no duplicates.
+def ensure_sorted_and_unique(value: tuple[float, ...]) -> tuple[float, ...]:
+    """Ensures the tuple is sorted and has no duplicates.
 
     Args:
-        value: A list of floats to verify.
+        value: A tuple of floats to verify.
 
     Returns:
-        Sorted list.
+        Sorted tuple.
 
     Raises:
-        ValueError: If the list has duplicates.
+        ValueError: If the tuple has duplicates.
     """
     if len(set(value)) != len(value):
         raise ValueError("List must have unique values!")
-    return sorted(value)
+    return tuple(sorted(value))
 
 
-def ensure_starts_with_empty_structure_and_unique(
+def ensure_unique_structures(
     value: StructureLut,
 ) -> StructureLut:
-    """Ensures the list is sorted and has no duplicates.
+    """Ensures the structure LUT has no duplicates.
 
     Args:
-        value: A list of AtlasStructures to verify.
+        value: A structure LUT to verify.
 
     Returns:
-        Validated list.
+        Validated structure LUT.
 
     Raises:
-        ValueError: If the list is empty, does not contain exactly 1 None only at the start, or has duplicates.
+        ValueError: If the LUT has duplicates.
     """
-    if len(value) == 0:
-        raise ValueError("LUT must have values!")
-    elif value[0].name != "empty":
-        raise ValueError("LUT must start with empty structure!")
-    elif len(set(value)) != len(value):
-        raise ValueError("LUT must have unique values!")
+    if len(set(value)) != len(value):
+        positions = defaultdict(list)
+        for index, structure in enumerate(value):
+            positions[structure].append(index)
+        duplicate_positions = {
+            structure: indices
+            for structure, indices in positions.items()
+            if len(indices) > 1
+        }
+        raise ValueError(
+            f"LUT must have unique values! Duplicates: {duplicate_positions}"
+        )
     return value
 
 
-class PinpointAtlasMetadata(BaseModel):
+class PinpointAtlasMetadata(BaseModel, frozen=True):
     """Atlas description and metadata.
 
     Attributes:
@@ -93,13 +91,13 @@ class PinpointAtlasMetadata(BaseModel):
     """
 
     name: Annotated[str, Field(min_length=1)]
-    converter_version: str
+    converter_version: Annotated[str, Field(min_length=1)]
     resolutions: Annotated[
-        list[float], Field(min_length=1), AfterValidator(ensure_sorted_and_unique)
+        tuple[float, ...], Field(min_length=1), AfterValidator(ensure_sorted_and_unique)
     ]
     root_id: StructureId
     structures: Annotated[
         StructureLut,
         Field(min_length=1),
-        AfterValidator(ensure_starts_with_empty_structure_and_unique),
+        AfterValidator(ensure_unique_structures),
     ]

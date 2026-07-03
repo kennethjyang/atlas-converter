@@ -5,15 +5,18 @@ Build Pinpoint V compatible atlases from BrainGlobe-style atlases.
 
 from itertools import groupby
 from pathlib import Path
+from tomllib import load
 from typing import Annotated, Iterator, Optional
 
 from brainglobe_atlasapi import BrainGlobeAtlas
+from numpy import searchsorted
 from rich.progress import Progress
 from typer import Argument, Exit, Option, Typer
 
 from atlas_compressor import (
     build_color_lut,
     build_structure_lut,
+    get_sorted_structure_ids,
     save_annotation,
     save_color_lut,
     save_meshes,
@@ -23,17 +26,44 @@ from atlas_manager import (
     allen_mouse_atlases,
     build_atlas_path,
     build_default_converted_atlases_path,
-    build_pinpoint_atlas_metadata,
     custom_atlases,
     get_all_allen_mouse_names_sorted,
     get_all_atlas_names_sorted,
     get_all_atlas_names_sorted_from,
-    get_converter_version,
-    save_pinpoint_atlas_metadata,
+    prepare_path,
     save_pinpoint_atlas_metadata_schema,
 )
+from models import PinpointAtlasMetadata
 
 app = Typer()
+
+
+def get_converter_version() -> str:
+    """Return the version of the converter as specified in the pyproject.toml file."""
+    with open(Path(__file__).parent / "pyproject.toml", "rb") as f:
+        return load(f)["project"]["version"]
+
+
+def print_version_callback(do_it: bool):
+    """Callback to print the version and exit from CLI.
+
+    Args:
+        do_it: Flag to do the printing.
+    """
+    if do_it:
+        print(get_converter_version())
+        raise Exit()
+
+
+# noinspection PyUnusedLocal
+@app.callback()
+def callback(
+    version: Annotated[
+        Optional[bool],
+        Option("--version", callback=print_version_callback, is_eager=True),
+    ] = None,
+):
+    """Tool to convert BrainGlobe formatted atlases into Pinpoint V compatible atlases."""
 
 
 def convert(
@@ -65,34 +95,53 @@ def convert(
             # Build output path for atlas.
             atlas_path = build_atlas_path(group_name, converted_atlases_path)
 
-            # Get all atlases in the group.
-            group = list(group_iterator)
+            # Extract first atlas to do common processing with.
+            first_atlas = next(group_iterator)
 
-            # Compress annotations and track group.
-            for atlas in group[:-1]:
-                save_annotation(atlas, atlas_path)
-                progress.advance(task)
+            # Skip atlases with no root.
+            if first_atlas.hierarchy.root is None:
+                print(f"Atlas {group_name} is missing root! Skipping...")
+                continue
 
-            # Get last atlas.
-            last_atlas = group[-1]
-
-            # Compress the last atlas and track progress after group finishes.
-            save_annotation(last_atlas, atlas_path)
+            # Begin building resolution list.
+            resolutions = [first_atlas.metadata["resolution"][0]]
 
             # Build LUTs
-            structure_lut = build_structure_lut(last_atlas)
+            structure_lut = build_structure_lut(first_atlas)
             color_lut = build_color_lut(structure_lut)
-
-            # Save metadata.
-            save_pinpoint_atlas_metadata(
-                build_pinpoint_atlas_metadata(group, structure_lut), atlas_path
-            )
 
             # Save color LUT.
             save_color_lut(color_lut, atlas_path)
 
             # Save meshes.
-            save_meshes(last_atlas, atlas_path)
+            save_meshes(first_atlas, atlas_path)
+
+            # Compress annotations.
+            save_annotation(first_atlas, atlas_path)
+
+            # Extract root ID.
+            root_id = int(
+                searchsorted(
+                    get_sorted_structure_ids(first_atlas), first_atlas.hierarchy.root
+                )
+            )
+
+            # Compress annotations and track resolutions.
+            for atlas in group_iterator:
+                save_annotation(atlas, atlas_path)
+                resolutions.append(atlas.metadata["resolution"][0])
+                progress.advance(task)
+
+            # Save atlas metadata.
+            metadata = PinpointAtlasMetadata(
+                name=group_name,
+                converter_version=get_converter_version(),
+                resolutions=resolutions,
+                root_id=root_id,
+                structures=structure_lut,
+            )
+            with open(prepare_path(atlas_path / "atlas.json"), "w") as f:
+                f.write(metadata.model_dump_json())
 
             # Finish the group.
             progress.advance(task)
@@ -144,27 +193,6 @@ def mouse(
         len(get_all_allen_mouse_names_sorted()),
         converted_atlases_path,
     )
-
-
-def print_version_callback(do_it: bool):
-    """Callback to print the version and exit from CLI.
-
-    Args:
-        do_it: Flag to do the printing.
-    """
-    if do_it:
-        print(get_converter_version())
-        raise Exit()
-
-
-@app.callback()
-def callback(
-    version: Annotated[
-        Optional[bool],
-        Option("--version", callback=print_version_callback, is_eager=True),
-    ] = None,
-):
-    """Tool to convert BrainGlobe formatted atlases into Pinpoint V compatible atlases."""
 
 
 if __name__ == "__main__":

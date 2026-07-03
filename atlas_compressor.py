@@ -1,7 +1,8 @@
 """Annotation compression operations."""
 
-from functools import lru_cache
+from functools import lru_cache, partial
 from math import ceil, sqrt
+from multiprocessing.pool import Pool
 from pathlib import Path
 
 from brainglobe_atlasapi import BrainGlobeAtlas
@@ -22,7 +23,7 @@ type Annotation = ndarray[tuple[int, int, int], dtype[uint16]]
 
 @lru_cache(1)
 def get_sorted_structure_ids(atlas: BrainGlobeAtlas) -> list[int]:
-    """Return all structure IDs in sorted order with 0 prepended.
+    """Return all structure IDs in sorted order.
 
     The last call is cached.
 
@@ -30,20 +31,16 @@ def get_sorted_structure_ids(atlas: BrainGlobeAtlas) -> list[int]:
         atlas: The atlas to extract IDs from.
 
     Raises:
-        ValueError: if the keys already uses 0 (reserved for empty space), or if IDs exceed 16-bit value.
+        ValueError: If IDs exceed 16-bit value.
     """
     sorted_keys = sorted(atlas.structures.keys())
-    if 0 in sorted_keys:
+
+    if len(sorted_keys) - 1 >= (1 << 16):
         raise ValueError(
-            'Atlas already uses reserved ID "0". We assume this is kept free to indicate empty space.'
+            f"Atlas structure IDs exceeds 16-bit data limit. We assume atlases with under {1 << 16} IDs with an additional slot for the empty region."
         )
 
-    if len(sorted_keys) + 1 >= (1 << 16):
-        raise ValueError(
-            f"Atlas structure IDs exceeds 16-bit data limit. We assume atlases with under {1 << 16} IDs."
-        )
-
-    return [0] + sorted_keys
+    return sorted_keys
 
 
 def build_remapped_annotation(
@@ -51,13 +48,26 @@ def build_remapped_annotation(
 ) -> Annotation:
     """Returns remap annotation values to the sorted structure IDs order.
 
+    Empty space (encoded as 0 in the annotation) is remapped to max uint16.
+
     Args:
         atlas: Brain Globe atlas to remap the annotation of.
     """
     flat_atlas = atlas.annotation.ravel()
-    remapped_flat = Categorical(
-        flat_atlas, categories=get_sorted_structure_ids(atlas)
-    ).codes.astype(uint16)
+
+    # Find the next unused ID value.
+    ids = get_sorted_structure_ids(atlas)
+    search_set = set(ids)
+    unused = 0
+    while unused in search_set:
+        unused += 1
+
+    # Replace empty if needed.
+    if unused != 0:
+        flat_atlas[flat_atlas == 0] = unused
+
+    # Remap annotation.
+    remapped_flat = Categorical(flat_atlas, categories=ids).codes.astype(uint16)
     return remapped_flat.reshape(atlas.shape)
 
 
@@ -70,21 +80,13 @@ def build_structure_lut(atlas: BrainGlobeAtlas) -> StructureLut:
     Args:
         atlas: Brain Globe atlas to build the Structure LUT for.
     """
-    # Initialize the LUT with the empty structure.
-    lut: StructureLut = [
-        AtlasStructure(
-            name="empty",
-            acronym=" ",
-            parent_id=None,
-            children_ids=set(),
-            color=[0, 0, 0],
-        )
-    ]
+    # Initialize the LUT.
+    lut: list[AtlasStructure] = []
 
     # Get all structure IDs and skip the 0-index one.
     ids = get_sorted_structure_ids(atlas)
     for structure_id in track(
-        ids[1:], description="Building structure LUT...", transient=True
+        ids, description="Building structure LUT...", transient=True
     ):
         # Get the structure data.
         structure_data = atlas.structures[structure_id]
@@ -112,7 +114,7 @@ def build_structure_lut(atlas: BrainGlobeAtlas) -> StructureLut:
             )
         )
 
-    return lut
+    return tuple(lut)
 
 
 def build_color_lut(structure_lut: StructureLut) -> list[UInt8]:
@@ -121,9 +123,9 @@ def build_color_lut(structure_lut: StructureLut) -> list[UInt8]:
     Args:
         structure_lut: Structure LUT to build the color LUT from.
     """
-    lut = [0, 0, 0, 255]
+    lut = []
     for structure in track(
-        structure_lut[1:], description="Building color LUT...", transient=True
+        structure_lut, description="Building color LUT...", transient=True
     ):
         lut.extend([*structure.color, 255])
 
@@ -171,6 +173,26 @@ def save_color_lut(lut: list[int], atlas_path: Path):
         f.write(bytes(lut))
 
 
+def _convert_mesh(item: tuple[int, str], atlas_path: Path):
+    # Extract mesh info.
+    compacted_id, mesh_path = item
+
+    # Skip missing meshes.
+    if not Path(mesh_path).is_file():
+        return
+
+    # Load.
+    mesh = load_mesh(mesh_path)
+
+    # Apply simplification and cleanup.
+    mesh = mesh.simplify_quadric_decimation(percent=0.9)
+    mesh.apply_scale(0.001)
+    mesh.process()
+
+    # Export as GLB.
+    mesh.export(prepare_path(atlas_path / "meshes" / f"{compacted_id}.glb"))
+
+
 def save_meshes(atlas: BrainGlobeAtlas, atlas_path: Path):
     """Write atlases meshes to disk as GLB with marching cube decimation.
 
@@ -178,28 +200,23 @@ def save_meshes(atlas: BrainGlobeAtlas, atlas_path: Path):
         atlas: BrainGlobe atlas to convert.
         atlas_path: Output directory for this atlas.
     """
-    for compacted_id, structure in enumerate(
-        track(
-            get_sorted_structure_ids(atlas)[1:],
-            description="Converting meshes...",
-            transient=True,
-        ),
-        start=1,
-    ):
-        # Get mesh path.
-        mesh_path = str(atlas.meshfile_from_structure(structure))
+    items = list(
+        enumerate(
+            (
+                str(atlas.meshfile_from_structure(structure))
+                for structure in get_sorted_structure_ids(atlas)[1:]
+            ),
+            start=1,
+        )
+    )
+    convert = partial(_convert_mesh, atlas_path=atlas_path)
 
-        # Skip missing meshes.
-        if not Path(mesh_path).is_file():
-            continue
-
-        # Load.
-        mesh = load_mesh(mesh_path)
-
-        # Apply simplification and cleanup.
-        mesh = mesh.simplify_quadric_decimation(percent=0.9)
-        mesh.apply_scale(0.001)
-        mesh.process()
-
-        # Export as GLB.
-        mesh.export(prepare_path(atlas_path / "meshes" / f"{compacted_id}.glb"))
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        TimeElapsedColumn(),
+        transient=True,
+    ) as progress:
+        progress.add_task("Converting Meshes...", total=None)
+        with Pool() as pool:
+            pool.map(convert, items, chunksize=4)
