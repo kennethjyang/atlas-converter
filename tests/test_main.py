@@ -1,6 +1,10 @@
 """Tests for main.py."""
 
+from pathlib import Path
+from unittest.mock import MagicMock
+
 import pytest
+from pytest_mock import MockerFixture
 from typer import Exit
 
 from main import (
@@ -14,7 +18,9 @@ from main import (
 )
 
 
-def make_atlas(mocker, name, resolution, root=1):
+def make_atlas(
+    mocker: MockerFixture, name: str, resolution: int, root: object = 1
+) -> MagicMock:
     atlas = mocker.MagicMock()
     atlas.metadata = {"name": name, "resolution": (resolution,)}
     atlas.hierarchy.root = root
@@ -22,7 +28,7 @@ def make_atlas(mocker, name, resolution, root=1):
 
 
 class TestGetConverterVersion:
-    def test_returns_version_from_pyproject_toml(self, mocker):
+    def test_returns_version_from_pyproject_toml(self, mocker: MockerFixture):
         mocker.patch("builtins.open", mocker.mock_open())
         mocker.patch("main.load", return_value={"project": {"version": "9.9.9"}})
 
@@ -30,7 +36,9 @@ class TestGetConverterVersion:
 
 
 class TestPrintVersionCallback:
-    def test_prints_version_and_exits_when_do_it_true(self, mocker, capsys):
+    def test_prints_version_and_exits_when_do_it_true(
+        self, mocker: MockerFixture, capsys: pytest.CaptureFixture[str]
+    ):
         mocker.patch("main.get_converter_version", return_value="9.9.9")
 
         with pytest.raises(Exit):
@@ -38,7 +46,9 @@ class TestPrintVersionCallback:
 
         assert capsys.readouterr().out.strip() == "9.9.9"
 
-    def test_does_nothing_when_do_it_false(self, mocker, capsys):
+    def test_does_nothing_when_do_it_false(
+        self, mocker: MockerFixture, capsys: pytest.CaptureFixture[str]
+    ):
         mock_get_version = mocker.patch("main.get_converter_version")
 
         print_version_callback(False)
@@ -53,7 +63,12 @@ class TestCallback:
 
 
 class TestConvert:
-    def test_skips_group_with_no_root(self, mocker, tmp_path, capsys):
+    def test_skips_group_with_no_root(
+        self,
+        mocker: MockerFixture,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ):
         mocker.patch("main.save_pinpoint_atlas_metadata_schema")
         mock_save_color_lut = mocker.patch("main.save_color_lut")
         mock_save_meshes = mocker.patch("main.save_meshes")
@@ -67,7 +82,9 @@ class TestConvert:
         mock_save_meshes.assert_not_called()
         mock_save_annotation.assert_not_called()
 
-    def test_full_happy_path_for_single_atlas_group(self, mocker, tmp_path):
+    def test_full_happy_path_for_single_atlas_group(
+        self, mocker: MockerFixture, tmp_path: Path
+    ):
         mocker.patch("main.save_pinpoint_atlas_metadata_schema")
         atlas_path = tmp_path / "atlasA"
         mocker.patch("main.build_atlas_path", return_value=atlas_path)
@@ -101,7 +118,7 @@ class TestConvert:
         mock_open.return_value.write.assert_called_once_with('{"a":1}')
 
     def test_accumulates_resolutions_and_saves_annotation_for_each_atlas_in_group(
-        self, mocker, tmp_path
+        self, mocker: MockerFixture, tmp_path: Path
     ):
         mocker.patch("main.save_pinpoint_atlas_metadata_schema")
         atlas_path = tmp_path / "atlasA"
@@ -131,7 +148,9 @@ class TestConvert:
 
 
 class TestBrainglobe:
-    def test_calls_convert_with_all_atlases_and_count(self, mocker, tmp_path):
+    def test_calls_convert_with_all_atlases_and_count(
+        self, mocker: MockerFixture, tmp_path: Path
+    ):
         mocker.patch("main.all_atlases", return_value=iter(["a", "b", "c"]))
         mocker.patch("main.get_all_atlas_names_sorted", return_value=["a", "b", "c"])
         mock_convert = mocker.patch("main.convert")
@@ -146,7 +165,9 @@ class TestBrainglobe:
 
 
 class TestCustom:
-    def test_calls_convert_with_custom_atlases_and_count(self, mocker, tmp_path):
+    def test_calls_convert_with_custom_atlases_and_count(
+        self, mocker: MockerFixture, tmp_path: Path
+    ):
         custom_path = tmp_path / "custom"
         mocker.patch("main.custom_atlases", return_value=iter(["x", "y"]))
         mocker.patch("main.get_all_atlas_names_sorted_from", return_value=["x", "y"])
@@ -162,7 +183,9 @@ class TestCustom:
 
 
 class TestMouse:
-    def test_calls_convert_with_allen_mouse_atlases_and_count(self, mocker, tmp_path):
+    def test_calls_convert_with_allen_mouse_atlases_and_count(
+        self, mocker: MockerFixture, tmp_path: Path
+    ):
         mocker.patch(
             "main.allen_mouse_atlases", return_value=iter(["m1", "m2", "m3", "m4"])
         )

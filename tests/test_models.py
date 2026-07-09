@@ -1,5 +1,7 @@
 """Tests for models.py."""
 
+from typing import Any
+
 import pytest
 from pydantic import ValidationError
 
@@ -11,8 +13,8 @@ from models import (
 )
 
 
-def make_structure(**overrides):
-    defaults = {
+def make_structure(**overrides: Any) -> AtlasStructure:
+    defaults: dict[str, Any] = {
         "name": "Root",
         "acronym": "RT",
         "parent_id": None,
@@ -96,8 +98,8 @@ class TestAtlasStructure:
 
 
 class TestPinpointAtlasMetadata:
-    def make_metadata(self, **overrides):
-        defaults = {
+    def make_metadata(self, **overrides: Any) -> PinpointAtlasMetadata:
+        defaults: dict[str, Any] = {
             "name": "test_atlas",
             "converter_version": "1.0.0",
             "resolutions": (25.0, 10.0),

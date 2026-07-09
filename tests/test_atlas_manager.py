@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+import pytest
+from pytest_mock import MockerFixture
 
 import atlas_manager
 from atlas_manager import (
@@ -19,7 +21,7 @@ from atlas_manager import (
 
 
 class TestGetAllAtlasNamesSorted:
-    def test_returns_sorted_names_from_remote_call(self, mocker):
+    def test_returns_sorted_names_from_remote_call(self, mocker: MockerFixture):
         mocker.patch.object(
             atlas_manager.list_atlases,
             "get_all_atlases_lastversions",
@@ -27,7 +29,7 @@ class TestGetAllAtlasNamesSorted:
         )
         assert get_all_atlas_names_sorted() == ["apple", "zebra"]
 
-    def test_result_is_cached(self, mocker):
+    def test_result_is_cached(self, mocker: MockerFixture):
         mock_get = mocker.patch.object(
             atlas_manager.list_atlases,
             "get_all_atlases_lastversions",
@@ -39,12 +41,12 @@ class TestGetAllAtlasNamesSorted:
 
 
 class TestGetAllAtlasNamesSortedFrom:
-    def test_returns_sorted_base_names_stripped_of_version(self, tmp_path):
+    def test_returns_sorted_base_names_stripped_of_version(self, tmp_path: Path):
         (tmp_path / "zebra_v2").mkdir()
         (tmp_path / "apple_v1").mkdir()
         assert get_all_atlas_names_sorted_from(tmp_path) == ["apple", "zebra"]
 
-    def test_ignores_plain_files(self, tmp_path):
+    def test_ignores_plain_files(self, tmp_path: Path):
         (tmp_path / "apple_v1").mkdir()
         (tmp_path / "not_a_dir.txt").write_text("data")
         assert get_all_atlas_names_sorted_from(tmp_path) == ["apple"]
@@ -61,7 +63,7 @@ class TestGetAllAllenMouseNamesSorted:
 
 
 class TestAllAtlases:
-    def test_yields_one_atlas_per_sorted_name(self, mocker):
+    def test_yields_one_atlas_per_sorted_name(self, mocker: MockerFixture):
         mocker.patch(
             "atlas_manager.get_all_atlas_names_sorted",
             return_value=["apple", "zebra"],
@@ -75,7 +77,7 @@ class TestAllAtlases:
 
 
 class TestCustomAtlases:
-    def test_yields_atlas_per_valid_name(self, mocker, tmp_path):
+    def test_yields_atlas_per_valid_name(self, mocker: MockerFixture, tmp_path: Path):
         mocker.patch(
             "atlas_manager.get_all_atlas_names_sorted_from",
             return_value=["apple", "zebra"],
@@ -89,7 +91,7 @@ class TestCustomAtlases:
         mock_cls.assert_any_call("zebra", brainglobe_dir=tmp_path, check_latest=False)
 
     def test_prints_exception_and_continues_when_atlas_raises(
-        self, mocker, tmp_path, capsys
+        self, mocker: MockerFixture, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ):
         mocker.patch(
             "atlas_manager.get_all_atlas_names_sorted_from",
@@ -97,7 +99,7 @@ class TestCustomAtlases:
         )
         good_atlas = mocker.MagicMock()
 
-        def side_effect(name, **kwargs):
+        def side_effect(name: str, **kwargs: object):
             if name == "broken":
                 raise ValueError("boom")
             return good_atlas
@@ -111,7 +113,7 @@ class TestCustomAtlases:
 
 
 class TestAllenMouseAtlases:
-    def test_skips_check_latest_when_all_downloaded(self, mocker):
+    def test_skips_check_latest_when_all_downloaded(self, mocker: MockerFixture):
         mocker.patch.object(
             atlas_manager.list_atlases,
             "get_downloaded_atlases",
@@ -129,7 +131,7 @@ class TestAllenMouseAtlases:
         for call in mock_cls.call_args_list:
             assert call.kwargs["check_latest"] is False
 
-    def test_checks_latest_when_atlas_missing_locally(self, mocker):
+    def test_checks_latest_when_atlas_missing_locally(self, mocker: MockerFixture):
         mocker.patch.object(
             atlas_manager.list_atlases,
             "get_downloaded_atlases",
@@ -144,7 +146,7 @@ class TestAllenMouseAtlases:
 
 
 class TestBuildDefaultConvertedAtlasesPath:
-    def test_returns_path_under_home(self, mocker):
+    def test_returns_path_under_home(self, mocker: MockerFixture):
         mocker.patch.object(Path, "home", return_value=Path("/home/fakeuser"))
         assert build_default_converted_atlases_path() == Path(
             "/home/fakeuser/pinpoint_atlases"
@@ -156,7 +158,7 @@ class TestBuildAtlasPath:
         result = build_atlas_path("my_atlas", Path("/root"))
         assert result == Path("/root/my_atlas")
 
-    def test_with_atlas_object(self, mocker):
+    def test_with_atlas_object(self, mocker: MockerFixture):
         atlas = mocker.MagicMock()
         atlas.metadata = {"name": "my_atlas"}
         result = build_atlas_path(atlas, Path("/root"))
@@ -164,13 +166,13 @@ class TestBuildAtlasPath:
 
 
 class TestPreparePath:
-    def test_creates_missing_parent_directories(self, tmp_path):
+    def test_creates_missing_parent_directories(self, tmp_path: Path):
         target = tmp_path / "nested" / "dir" / "file.txt"
         result = prepare_path(target)
         assert result == target
         assert target.parent.is_dir()
 
-    def test_noop_when_parent_already_exists(self, tmp_path):
+    def test_noop_when_parent_already_exists(self, tmp_path: Path):
         target = tmp_path / "file.txt"
         result = prepare_path(target)
         assert result == target
@@ -178,7 +180,9 @@ class TestPreparePath:
 
 
 class TestSavePinpointAtlasMetadataSchema:
-    def test_writes_metadata_schema_to_expected_path(self, mocker, tmp_path):
+    def test_writes_metadata_schema_to_expected_path(
+        self, mocker: MockerFixture, tmp_path: Path
+    ):
         mock_dump = mocker.patch("atlas_manager.dump")
         mock_open = mocker.patch("builtins.open", mocker.mock_open())
 

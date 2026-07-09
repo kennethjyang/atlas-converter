@@ -1,10 +1,12 @@
 """Tests for atlas_compressor.py."""
 
 from math import ceil, sqrt
+from pathlib import Path
 
 import numpy as np
 import pytest
 from numpy import uint16
+from pytest_mock import MockerFixture
 
 from atlas_compressor import (
     build_color_lut,
@@ -16,21 +18,24 @@ from atlas_compressor import (
     save_meshes,
 )
 from models import AtlasStructure
+from tests.conftest import MakeMockAtlas
 
 
 class TestGetSortedStructureIds:
-    def test_returns_sorted_keys(self, make_mock_atlas):
+    def test_returns_sorted_keys(self, make_mock_atlas: MakeMockAtlas):
         atlas = make_mock_atlas(structures={5: {}, 2: {}, 9: {}})
         assert get_sorted_structure_ids(atlas) == [2, 5, 9]
 
-    def test_raises_when_ids_exceed_16_bit_limit(self, make_mock_atlas):
+    def test_raises_when_ids_exceed_16_bit_limit(self, make_mock_atlas: MakeMockAtlas):
         atlas = make_mock_atlas(structures={i: {} for i in range(65537)})
         with pytest.raises(ValueError, match="16-bit"):
             get_sorted_structure_ids(atlas)
 
 
 class TestBuildRemappedAnnotation:
-    def test_relabels_background_when_zero_is_a_valid_id(self, make_mock_atlas, mocker):
+    def test_relabels_background_when_zero_is_a_valid_id(
+        self, make_mock_atlas: MakeMockAtlas, mocker: MockerFixture
+    ):
         ids = [0, 3, 7]
         annotation = np.array([[0, 3], [7, 0]], dtype=np.uint16)
         atlas = make_mock_atlas(shape=(2, 2), annotation=annotation)
@@ -41,7 +46,9 @@ class TestBuildRemappedAnnotation:
         expected = np.array([[65535, 1], [2, 65535]], dtype=np.uint16)
         np.testing.assert_array_equal(result, expected)
 
-    def test_no_relabel_when_zero_is_unused(self, make_mock_atlas, mocker):
+    def test_no_relabel_when_zero_is_unused(
+        self, make_mock_atlas: MakeMockAtlas, mocker: MockerFixture
+    ):
         ids = [3, 7, 9]
         annotation = np.array([[0, 3], [7, 9]], dtype=np.uint16)
         atlas = make_mock_atlas(shape=(2, 2), annotation=annotation)
@@ -54,7 +61,9 @@ class TestBuildRemappedAnnotation:
 
 
 class TestBuildStructureLut:
-    def test_builds_lut_with_remapped_parent_and_children_ids(self, make_mock_atlas):
+    def test_builds_lut_with_remapped_parent_and_children_ids(
+        self, make_mock_atlas: MakeMockAtlas
+    ):
         atlas = make_mock_atlas(
             structures={
                 10: {"name": "Root", "acronym": "RT", "rgb_triplet": (1, 2, 3)},
@@ -83,7 +92,7 @@ class TestBuildStructureLut:
             ),
         )
 
-    def test_raises_when_hierarchy_node_missing(self, make_mock_atlas):
+    def test_raises_when_hierarchy_node_missing(self, make_mock_atlas: MakeMockAtlas):
         atlas = make_mock_atlas(
             structures={5: {"name": "A", "acronym": "A", "rgb_triplet": (1, 2, 3)}}
         )
@@ -118,7 +127,7 @@ class TestBuildColorLut:
 
 class TestSaveAnnotation:
     def test_creates_zarr_array_and_writes_remapped_annotation(
-        self, make_mock_atlas, mocker, tmp_path
+        self, make_mock_atlas: MakeMockAtlas, mocker: MockerFixture, tmp_path: Path
     ):
         atlas = make_mock_atlas(shape=(10, 20, 10), resolution=(25, 25, 25))
         mock_create_array = mocker.patch("atlas_compressor.create_array")
@@ -143,7 +152,7 @@ class TestSaveAnnotation:
 
 
 class TestSaveColorLut:
-    def test_writes_bytes_to_expected_path(self, mocker, tmp_path):
+    def test_writes_bytes_to_expected_path(self, mocker: MockerFixture, tmp_path: Path):
         mock_open = mocker.patch("builtins.open", mocker.mock_open())
 
         save_color_lut([1, 2, 3, 255], tmp_path)
@@ -154,7 +163,7 @@ class TestSaveColorLut:
 
 class TestSaveMeshes:
     def test_maps_convert_over_items_excluding_first_sorted_id(
-        self, make_mock_atlas, mocker, tmp_path
+        self, make_mock_atlas: MakeMockAtlas, mocker: MockerFixture, tmp_path: Path
     ):
         atlas = make_mock_atlas(structures={1: {}, 2: {}, 3: {}})
         mock_pool_cls = mocker.patch("atlas_compressor.Pool")
@@ -169,7 +178,7 @@ class TestSaveMeshes:
         assert convert_func.keywords == {"atlas_path": tmp_path}
 
     def test_convert_mesh_skips_missing_mesh_file(
-        self, make_mock_atlas, mocker, tmp_path
+        self, make_mock_atlas: MakeMockAtlas, mocker: MockerFixture, tmp_path: Path
     ):
         atlas = make_mock_atlas(structures={1: {}, 2: {}})
         mock_pool_cls = mocker.patch("atlas_compressor.Pool")
@@ -184,7 +193,7 @@ class TestSaveMeshes:
         mock_load_mesh.assert_not_called()
 
     def test_convert_mesh_processes_and_exports_existing_mesh_file(
-        self, make_mock_atlas, mocker, tmp_path
+        self, make_mock_atlas: MakeMockAtlas, mocker: MockerFixture, tmp_path: Path
     ):
         atlas = make_mock_atlas(structures={1: {}, 2: {}})
         mock_pool_cls = mocker.patch("atlas_compressor.Pool")
