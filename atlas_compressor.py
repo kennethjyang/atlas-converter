@@ -6,8 +6,7 @@ from multiprocessing.pool import Pool
 from pathlib import Path
 
 from brainglobe_atlasapi import BrainGlobeAtlas
-from numpy import dtype, ndarray, searchsorted, uint16
-from pandas import Categorical
+from numpy import array, dtype, ndarray, searchsorted, uint16, where
 from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn, track
 from trimesh import load_mesh
 from zarr import create_array
@@ -66,8 +65,12 @@ def build_remapped_annotation(
     if unused != 0:
         flat_atlas[flat_atlas == 0] = unused
 
-    # Remap annotation.
-    remapped_flat = Categorical(flat_atlas, categories=ids).codes.astype(uint16)
+    # Remap annotation. Values not found in `ids` (e.g. relabeled empty space)
+    # are mapped to max uint16.
+    ids_array = array(ids)
+    codes = searchsorted(ids_array, flat_atlas).clip(max=len(ids_array) - 1)
+    found = ids_array[codes] == flat_atlas
+    remapped_flat = where(found, codes, 65535).astype(uint16)
     return remapped_flat.reshape(atlas.shape)
 
 
