@@ -249,3 +249,5 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,python,macos,linux
 .idea/
+/.claude/worktrees
+/.claude/settings.local.json
