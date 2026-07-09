@@ -1,0 +1,41 @@
+name: Test
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: 🛎 Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: 🔭 Install UV
+        uses: astral-sh/setup-uv@f98e06938123ccabd21905ea5d0069192241f9f1
+        with:
+          activate-environment: 'true'
+
+      - name: 🔄 Sync Dependencies
+        run: uv sync
+
+      - name: 🔍 Test with coverage
+        run: pytest --cov=. --cov-report=xml
+
+      - name: ⬆️ Upload coverage report
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/upload-code-coverage@v1
+        with:
+          file: coverage.xml
+          language: Python
+          label: code-coverage/pytest
