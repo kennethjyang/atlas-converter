@@ -8,7 +8,6 @@ dependencies = [
     "brainglobe-atlasapi>=2.3.1",
     "fast-simplification>=0.1.13",
     "numpy>=2.5.0",
-    "pandas>=3.0.3",
     "pydantic>=2.13.4",
     "pyrefly>=1.0.0",
     "pytest>=9.1.1",
@@ -44,5 +43,4 @@ dev = [
     "lefthook>=2.1.9",
     "pyrefly>=1.1.1",
     "ruff>=0.15.20",
-    "pandas-stubs~=3.0.3",
 ]
