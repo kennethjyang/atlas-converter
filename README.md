@@ -1,4 +1,8 @@
 # Atlas Converter
+
+[![Test](https://github.com/kennethjyang/atlas-converter/actions/workflows/test.yml/badge.svg)](https://github.com/kennethjyang/atlas-converter/actions/workflows/test.yml)
+[![Code Quality](https://github.com/kennethjyang/atlas-converter/actions/workflows/code-quality.yml/badge.svg)](https://github.com/kennethjyang/atlas-converter/actions/workflows/code-quality.yml)
+
 Tool to convert BrainGlobe-formatted atlases into Pinpoint V-compatible atlases.
 
 > [!WARNING]
