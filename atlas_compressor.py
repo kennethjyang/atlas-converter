@@ -6,7 +6,8 @@ from multiprocessing.pool import Pool
 from pathlib import Path
 
 from brainglobe_atlasapi import BrainGlobeAtlas
-from numpy import array, dtype, ndarray, searchsorted, uint16, where
+from numpy import dtype, ndarray, searchsorted, uint16
+from pandas import Index
 from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn, track
 from trimesh import load_mesh
 from zarr import create_array
@@ -47,30 +48,19 @@ def build_remapped_annotation(
 ) -> Annotation:
     """Returns remap annotation values to the sorted structure IDs order.
 
-    Empty space (encoded as 0 in the annotation) is remapped to max uint16.
+    Empty space (encoded as 0 in the annotation) and any value without a
+    matching structure ID are remapped to max uint16.
 
     Args:
         atlas: Brain Globe atlas to remap the annotation of.
     """
     flat_atlas = atlas.annotation.ravel()
-
-    # Find the next unused ID value.
     ids = get_sorted_structure_ids(atlas)
-    search_set = set(ids)
-    unused = 0
-    while unused in search_set:
-        unused += 1
 
-    # Replace empty if needed.
-    if unused != 0:
-        flat_atlas[flat_atlas == 0] = unused
+    # pyrefly: ignore [bad-argument-type]
+    remapped_flat = Index(ids).get_indexer(flat_atlas).astype(uint16)
+    remapped_flat[flat_atlas == 0] = (1 << 16) - 1
 
-    # Remap annotation. Values not found in `ids` (e.g. relabeled empty space)
-    # are mapped to max uint16.
-    ids_array = array(ids)
-    codes = searchsorted(ids_array, flat_atlas).clip(max=len(ids_array) - 1)
-    found = ids_array[codes] == flat_atlas
-    remapped_flat = where(found, codes, 65535).astype(uint16)
     return remapped_flat.reshape(atlas.shape)
 
 
