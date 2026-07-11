@@ -1,9 +1,10 @@
 """Data models and validation methods."""
 
 from collections import defaultdict
-from typing import Annotated, Optional
+from typing import Annotated, Any, Optional, override
 
-from pydantic import AfterValidator, BaseModel, Field
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field
+from pydantic.alias_generators import to_camel
 
 # Remapped structure ID (should be in the range of an unsigned short)
 StructureId = Annotated[int, Field(ge=0, lt=1 << 16)]
@@ -15,7 +16,23 @@ UInt8 = Annotated[int, AfterValidator(lambda value: max(0, min(255, value)))]
 type StructureLut = tuple[AtlasStructure, ...]
 
 
-class AtlasStructure(BaseModel, frozen=True):
+class CamelCaseModel(BaseModel):
+    """Base model that (de)serializes fields using camelCase JSON keys."""
+
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+    @override
+    def model_dump(self, **kwargs: Any) -> dict[str, Any]:
+        kwargs.setdefault("by_alias", True)
+        return super().model_dump(**kwargs)
+
+    @override
+    def model_dump_json(self, **kwargs: Any) -> str:
+        kwargs.setdefault("by_alias", True)
+        return super().model_dump_json(**kwargs)
+
+
+class AtlasStructure(CamelCaseModel, frozen=True):
     """Structure description.
 
     Attributes:
@@ -79,7 +96,7 @@ def ensure_unique_structures(
     return value
 
 
-class PinpointAtlasMetadata(BaseModel, frozen=True):
+class PinpointAtlasMetadata(CamelCaseModel, frozen=True):
     """Atlas description and metadata.
 
     Attributes:
