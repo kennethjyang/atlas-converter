@@ -26,15 +26,24 @@ def make_structure(**overrides: Any) -> AtlasStructure:
 
 
 class TestEnsureSortedAndUnique:
-    def test_returns_sorted_tuple(self):
-        assert ensure_sorted_and_unique((3.0, 1.0, 2.0)) == (1.0, 2.0, 3.0)
+    def test_returns_sorted_tuple_by_min_value(self):
+        assert ensure_sorted_and_unique(
+            ((30.0, 30.0, 30.0), (10.0, 10.0, 10.0), (20.0, 20.0, 20.0))
+        ) == ((10.0, 10.0, 10.0), (20.0, 20.0, 20.0), (30.0, 30.0, 30.0))
+
+    def test_sorts_anisotropic_tuples_by_smallest_axis_value(self):
+        assert ensure_sorted_and_unique(((25.0, 10.0, 10.0), (5.0, 25.0, 25.0))) == (
+            (5.0, 25.0, 25.0),
+            (25.0, 10.0, 10.0),
+        )
 
     def test_already_sorted_returns_same_values(self):
-        assert ensure_sorted_and_unique((1.0, 2.0, 3.0)) == (1.0, 2.0, 3.0)
+        value = ((10.0, 10.0, 10.0), (20.0, 20.0, 20.0))
+        assert ensure_sorted_and_unique(value) == value
 
     def test_raises_on_duplicate_values(self):
         with pytest.raises(ValueError, match="unique"):
-            ensure_sorted_and_unique((1.0, 2.0, 2.0))
+            ensure_sorted_and_unique(((10.0, 10.0, 10.0), (10.0, 10.0, 10.0)))
 
 
 class TestEnsureUniqueStructures:
@@ -102,7 +111,7 @@ class TestPinpointAtlasMetadata:
         defaults: dict[str, Any] = {
             "name": "test_atlas",
             "converter_version": "1.0.0",
-            "resolutions": (25.0, 10.0),
+            "resolutions": ((25.0, 25.0, 25.0), (10.0, 10.0, 10.0)),
             "root_id": 0,
             "structures": (make_structure(name="Root"),),
             "default_reference_coordinate": (1.0, 2.0, 3.0),
@@ -113,7 +122,7 @@ class TestPinpointAtlasMetadata:
     def test_valid_construction(self):
         metadata = self.make_metadata()
         assert metadata.name == "test_atlas"
-        assert metadata.resolutions == (10.0, 25.0)
+        assert metadata.resolutions == ((10.0, 10.0, 10.0), (25.0, 25.0, 25.0))
         assert metadata.default_reference_coordinate == (1.0, 2.0, 3.0)
 
     def test_empty_name_raises(self):
@@ -125,12 +134,22 @@ class TestPinpointAtlasMetadata:
             self.make_metadata(converter_version="")
 
     def test_unsorted_resolutions_are_sorted(self):
-        metadata = self.make_metadata(resolutions=(50.0, 10.0, 25.0))
-        assert metadata.resolutions == (10.0, 25.0, 50.0)
+        metadata = self.make_metadata(
+            resolutions=(
+                (50.0, 50.0, 50.0),
+                (10.0, 10.0, 10.0),
+                (25.0, 25.0, 25.0),
+            )
+        )
+        assert metadata.resolutions == (
+            (10.0, 10.0, 10.0),
+            (25.0, 25.0, 25.0),
+            (50.0, 50.0, 50.0),
+        )
 
     def test_duplicate_resolutions_raise(self):
         with pytest.raises(ValidationError):
-            self.make_metadata(resolutions=(10.0, 10.0))
+            self.make_metadata(resolutions=((10.0, 10.0, 10.0), (10.0, 10.0, 10.0)))
 
     def test_root_id_out_of_range_raises(self):
         with pytest.raises(ValidationError):

@@ -97,6 +97,37 @@ def allen_mouse_atlases() -> Iterator[BrainGlobeAtlas]:
 """Metadata additions."""
 
 
+def get_atlas_resolution(atlas: BrainGlobeAtlas) -> tuple[float, ...]:
+    """Returns the atlas's per-axis resolution in micrometers.
+
+    Args:
+        atlas: BrainGlobe atlas to extract the resolution of.
+    """
+    return tuple(float(value) for value in atlas.metadata["resolution"])
+
+
+def ensure_asr_orientation(atlas: BrainGlobeAtlas) -> None:
+    """Raises if the atlas is not stored in ASR order.
+
+    The converter assumes ASR (Anterior, Superior, Right) storage order
+    throughout. If an atlas ever uses a different orientation, this should be
+    handled explicitly rather than silently producing incorrect output.
+
+    Args:
+        atlas: BrainGlobe atlas to check the orientation of.
+
+    Raises:
+        ValueError: If the atlas's orientation is not "asr".
+    """
+    orientation = atlas.metadata["orientation"]
+    if orientation != "asr":
+        raise ValueError(
+            f"Atlas {atlas.metadata['name']} has orientation {orientation!r}, "
+            "but the converter assumes 'asr'. Handling other orientations is "
+            "not implemented."
+        )
+
+
 def build_default_reference_coordinate(
     atlas: BrainGlobeAtlas,
 ) -> tuple[float, float, float]:

@@ -14,9 +14,11 @@ from atlas_manager import (
     build_default_converted_atlases_path,
     build_default_reference_coordinate,
     custom_atlases,
+    ensure_asr_orientation,
     get_all_allen_mouse_names_sorted,
     get_all_atlas_names_sorted,
     get_all_atlas_names_sorted_from,
+    get_atlas_resolution,
     prepare_path,
     save_pinpoint_atlas_metadata_schema,
 )
@@ -198,6 +200,23 @@ class TestSavePinpointAtlasMetadataSchema:
             == atlas_manager.PinpointAtlasMetadata.model_json_schema()
         )
         assert mock_dump.call_args[1] == {"separators": (",", ":")}
+
+
+class TestGetAtlasResolution:
+    def test_returns_resolution_as_float_tuple(self, make_mock_atlas: MakeMockAtlas):
+        atlas = make_mock_atlas(resolution=(25, 10, 10))
+        assert get_atlas_resolution(atlas) == (25.0, 10.0, 10.0)
+
+
+class TestEnsureAsrOrientation:
+    def test_does_not_raise_for_asr(self, make_mock_atlas: MakeMockAtlas):
+        atlas = make_mock_atlas(orientation="asr")
+        ensure_asr_orientation(atlas)
+
+    def test_raises_for_non_asr(self, make_mock_atlas: MakeMockAtlas):
+        atlas = make_mock_atlas(name="weird_atlas", orientation="lps")
+        with pytest.raises(ValueError, match="weird_atlas"):
+            ensure_asr_orientation(atlas)
 
 
 class TestBuildDefaultReferenceCoordinate:

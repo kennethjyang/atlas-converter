@@ -30,6 +30,7 @@ def make_mock_atlas(mocker: MockerFixture) -> MakeMockAtlas:
         *,
         name: str = "test_atlas",
         resolution: tuple[int, ...] = (25, 25, 25),
+        orientation: str = "asr",
         shape: tuple[int, ...] = (3, 3, 3),
         structures: Optional[dict[int, dict[str, object]]] = None,
         root_id: Optional[int] = 1,
@@ -40,7 +41,11 @@ def make_mock_atlas(mocker: MockerFixture) -> MakeMockAtlas:
         meshfile_map: Optional[dict[int, str]] = None,
     ) -> MagicMock:
         atlas = mocker.MagicMock()
-        atlas.metadata = {"name": name, "resolution": resolution}
+        atlas.metadata = {
+            "name": name,
+            "resolution": resolution,
+            "orientation": orientation,
+        }
         atlas.shape = shape
         atlas.shape_um = tuple(s * r for s, r in zip(shape, resolution))
         atlas.atlas_name = atlas_name

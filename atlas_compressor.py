@@ -13,7 +13,7 @@ from trimesh import load_mesh
 from zarr import create_array
 from zarr.codecs import BloscCodec, BloscShuffle
 
-from atlas_manager import prepare_path
+from atlas_manager import get_atlas_resolution, prepare_path
 from models import AtlasStructure, StructureLut, UInt8
 
 type Annotation = ndarray[tuple[int, int, int], dtype[uint16]]
@@ -136,6 +136,7 @@ def save_annotation(atlas: BrainGlobeAtlas, atlas_path: Path):
         atlas_path: Output directory for this atlas.
     """
     chunk_width = ceil(sqrt(1_000_000 / 4 / atlas.shape[1]))
+    resolution_name = "-".join(str(value) for value in get_atlas_resolution(atlas))
     with Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
@@ -144,7 +145,7 @@ def save_annotation(atlas: BrainGlobeAtlas, atlas_path: Path):
     ) as progress:
         progress.add_task(f"Compressing {atlas.atlas_name} annotation...", total=None)
         annotation_zarr = create_array(
-            store=prepare_path(atlas_path / f"{atlas.metadata['resolution'][0]}.zarr"),
+            store=prepare_path(atlas_path / f"{resolution_name}.zarr"),
             shape=atlas.shape,
             chunks=(chunk_width, atlas.shape[1], chunk_width),
             shards=(chunk_width * 3, atlas.shape[1], chunk_width * 3),
