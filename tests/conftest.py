@@ -42,6 +42,7 @@ def make_mock_atlas(mocker: MockerFixture) -> MakeMockAtlas:
         atlas = mocker.MagicMock()
         atlas.metadata = {"name": name, "resolution": resolution}
         atlas.shape = shape
+        atlas.shape_um = tuple(s * r for s, r in zip(shape, resolution))
         atlas.atlas_name = atlas_name
         resolved_structures: dict[int, dict[str, object]] = (
             structures if structures is not None else {}

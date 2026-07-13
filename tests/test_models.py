@@ -105,6 +105,7 @@ class TestPinpointAtlasMetadata:
             "resolutions": (25.0, 10.0),
             "root_id": 0,
             "structures": (make_structure(name="Root"),),
+            "default_reference_coordinate": (1.0, 2.0, 3.0),
         }
         defaults.update(overrides)
         return PinpointAtlasMetadata(**defaults)
@@ -113,6 +114,7 @@ class TestPinpointAtlasMetadata:
         metadata = self.make_metadata()
         assert metadata.name == "test_atlas"
         assert metadata.resolutions == (10.0, 25.0)
+        assert metadata.default_reference_coordinate == (1.0, 2.0, 3.0)
 
     def test_empty_name_raises(self):
         with pytest.raises(ValidationError):
@@ -142,3 +144,9 @@ class TestPinpointAtlasMetadata:
         structure = make_structure(name="Root")
         with pytest.raises(ValidationError):
             self.make_metadata(structures=(structure, structure))
+
+    def test_serializes_with_camel_case_key(self):
+        metadata = self.make_metadata(default_reference_coordinate=(5.0, 10.0, 15.0))
+        dumped = metadata.model_dump()
+        assert "defaultReferenceCoordinate" in dumped
+        assert dumped["defaultReferenceCoordinate"] == (5.0, 10.0, 15.0)

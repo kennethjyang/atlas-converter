@@ -26,6 +26,7 @@ from atlas_manager import (
     allen_mouse_atlases,
     build_atlas_path,
     build_default_converted_atlases_path,
+    build_default_reference_coordinate,
     custom_atlases,
     get_all_allen_mouse_names_sorted,
     get_all_atlas_names_sorted,
@@ -139,6 +140,9 @@ def convert(
                 resolutions=resolutions,
                 root_id=root_id,
                 structures=structure_lut,
+                default_reference_coordinate=build_default_reference_coordinate(
+                    first_atlas
+                ),
             )
             with open(prepare_path(atlas_path / "atlas.json"), "w") as f:
                 f.write(metadata.model_dump_json())
