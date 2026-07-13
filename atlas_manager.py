@@ -13,7 +13,36 @@ from brainglobe_atlasapi.bg_atlas import BrainGlobeAtlas
 
 from models import PinpointAtlasMetadata
 
+# Per-atlas overrides for the default reference coordinate, in ASR order (mm).
+DEFAULT_REFERENCE_COORDINATE_OVERRIDES: dict[str, tuple[float, float, float]] = {
+    "allen_mouse": (5.7, 0.44, 5.4),
+}
+
 """Brain Globe atlas loading."""
+
+
+def build_default_reference_coordinate(
+    atlas: BrainGlobeAtlas,
+) -> tuple[float, float, float]:
+    """Returns the default reference coordinate in ASR order (mm).
+
+    Uses the override for this atlas name if one exists; otherwise defaults to
+    the center of the AP/ML plane with DV = 0. Assumes ASR storage order.
+
+    Args:
+        atlas: BrainGlobe atlas to compute the default reference coordinate for.
+
+    Returns:
+        Default reference coordinate (AP, DV, ML) in mm.
+    """
+    name = atlas.metadata["name"]
+    if name in DEFAULT_REFERENCE_COORDINATE_OVERRIDES:
+        return DEFAULT_REFERENCE_COORDINATE_OVERRIDES[name]
+
+    # ASR order: axis 0 = AP, axis 1 = superior-inferior (DV), axis 2 = ML.
+    ap_extent_mm = atlas.shape_um[0] / 1000
+    ml_extent_mm = atlas.shape_um[2] / 1000
+    return (ap_extent_mm / 2, 0.0, ml_extent_mm / 2)
 
 
 @cache

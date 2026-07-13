@@ -96,6 +96,10 @@ class TestConvert:
         mock_save_annotation = mocker.patch("main.save_annotation")
         mocker.patch("main.get_sorted_structure_ids", return_value=[0, 5, 10])
         mocker.patch("main.get_converter_version", return_value="1.2.3")
+        mock_build_ref = mocker.patch(
+            "main.build_default_reference_coordinate",
+            return_value="ref_coord_sentinel",
+        )
         mock_metadata_cls = mocker.patch("main.PinpointAtlasMetadata")
         mock_metadata_cls.return_value.model_dump_json.return_value = '{"a":1}'
         mock_open = mocker.patch("builtins.open", mocker.mock_open())
@@ -107,12 +111,14 @@ class TestConvert:
         mock_save_color_lut.assert_called_once_with("color_lut_sentinel", atlas_path)
         mock_save_meshes.assert_called_once_with(atlas, atlas_path)
         mock_save_annotation.assert_called_once_with(atlas, atlas_path)
+        mock_build_ref.assert_called_once_with(atlas)
         mock_metadata_cls.assert_called_once_with(
             name="atlasA",
             converter_version="1.2.3",
             resolutions=[25],
             root_id=1,
             structures="structure_lut_sentinel",
+            default_reference_coordinate="ref_coord_sentinel",
         )
         mock_open.assert_called_once_with(atlas_path / "atlas.json", "w")
         mock_open.return_value.write.assert_called_once_with('{"a":1}')

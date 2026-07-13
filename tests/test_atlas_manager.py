@@ -7,10 +7,12 @@ from pytest_mock import MockerFixture
 
 import atlas_manager
 from atlas_manager import (
+    DEFAULT_REFERENCE_COORDINATE_OVERRIDES,
     all_atlases,
     allen_mouse_atlases,
     build_atlas_path,
     build_default_converted_atlases_path,
+    build_default_reference_coordinate,
     custom_atlases,
     get_all_allen_mouse_names_sorted,
     get_all_atlas_names_sorted,
@@ -18,6 +20,7 @@ from atlas_manager import (
     prepare_path,
     save_pinpoint_atlas_metadata_schema,
 )
+from tests.conftest import MakeMockAtlas
 
 
 class TestGetAllAtlasNamesSorted:
@@ -195,3 +198,43 @@ class TestSavePinpointAtlasMetadataSchema:
             == atlas_manager.PinpointAtlasMetadata.model_json_schema()
         )
         assert mock_dump.call_args[1] == {"separators": (",", ":")}
+
+
+class TestBuildDefaultReferenceCoordinate:
+    def test_returns_override_when_name_matches(self, make_mock_atlas: MakeMockAtlas):
+        atlas = make_mock_atlas(name="allen_mouse", shape=(1000, 500, 2000))
+        result = build_default_reference_coordinate(atlas)
+        assert result == (5.7, 0.44, 5.4)
+
+    def test_computes_default_for_non_override_atlas(
+        self, make_mock_atlas: MakeMockAtlas
+    ):
+        atlas = make_mock_atlas(
+            name="test_atlas", shape=(200, 100, 400), resolution=(25, 25, 25)
+        )
+        result = build_default_reference_coordinate(atlas)
+        # shape_um = (5000, 2500, 10000)
+        # AP center (axis 0) = 5000 / 2 / 1000 = 2.5 mm
+        # DV = 0.0
+        # ML center (axis 2) = 10000 / 2 / 1000 = 5.0 mm
+        assert result == (2.5, 0.0, 5.0)
+
+    def test_computes_default_with_different_resolution(
+        self, make_mock_atlas: MakeMockAtlas
+    ):
+        atlas = make_mock_atlas(
+            name="another_atlas", shape=(100, 200, 300), resolution=(10, 10, 10)
+        )
+        result = build_default_reference_coordinate(atlas)
+        # shape_um = (1000, 2000, 3000)
+        # AP center = 1000 / 2 / 1000 = 0.5 mm
+        # ML center = 3000 / 2 / 1000 = 1.5 mm
+        assert result == (0.5, 0.0, 1.5)
+
+    def test_overrides_dict_contains_allen_mouse(self):
+        assert "allen_mouse" in DEFAULT_REFERENCE_COORDINATE_OVERRIDES
+        assert DEFAULT_REFERENCE_COORDINATE_OVERRIDES["allen_mouse"] == (
+            5.7,
+            0.44,
+            5.4,
+        )
