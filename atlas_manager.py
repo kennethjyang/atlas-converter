@@ -21,62 +21,6 @@ DEFAULT_REFERENCE_COORDINATE_OVERRIDES: dict[str, tuple[float, float, float]] = 
 """Brain Globe atlas loading."""
 
 
-def get_atlas_resolution(atlas: BrainGlobeAtlas) -> tuple[float, ...]:
-    """Returns the atlas's per-axis resolution in micrometers.
-
-    Args:
-        atlas: BrainGlobe atlas to extract the resolution of.
-    """
-    return tuple(float(value) for value in atlas.metadata["resolution"])
-
-
-def ensure_asr_orientation(atlas: BrainGlobeAtlas) -> None:
-    """Raises if the atlas is not stored in ASR order.
-
-    The converter assumes ASR (Anterior, Superior, Right) storage order
-    throughout. If an atlas ever uses a different orientation, this should be
-    handled explicitly rather than silently producing incorrect output.
-
-    Args:
-        atlas: BrainGlobe atlas to check the orientation of.
-
-    Raises:
-        ValueError: If the atlas's orientation is not "asr".
-    """
-    orientation = atlas.metadata["orientation"]
-    if orientation != "asr":
-        raise ValueError(
-            f"Atlas {atlas.metadata['name']} has orientation {orientation!r}, "
-            "but the converter assumes 'asr'. Handling other orientations is "
-            "not implemented."
-        )
-
-
-def build_default_reference_coordinate(
-    atlas: BrainGlobeAtlas,
-) -> tuple[float, float, float]:
-    """Returns the default reference coordinate in ASR order (mm).
-
-    Uses the override for this atlas name if one exists; otherwise defaults to
-    the center of the AP/ML plane with DV = 0. Assumes ASR storage order (see
-    ensure_asr_orientation, which should be called upstream to verify this).
-
-    Args:
-        atlas: BrainGlobe atlas to compute the default reference coordinate for.
-
-    Returns:
-        Default reference coordinate (AP, DV, ML) in mm.
-    """
-    name = atlas.metadata["name"]
-    if name in DEFAULT_REFERENCE_COORDINATE_OVERRIDES:
-        return DEFAULT_REFERENCE_COORDINATE_OVERRIDES[name]
-
-    # ASR order: axis 0 = AP, axis 1 = superior-inferior (DV), axis 2 = ML.
-    ap_extent_mm = atlas.shape_um[0] / 1000
-    ml_extent_mm = atlas.shape_um[2] / 1000
-    return (ap_extent_mm / 2, 0.0, ml_extent_mm / 2)
-
-
 @cache
 def get_all_atlas_names_sorted() -> list[str]:
     """Returns sorted list of all latest BrainGlobe atlas names. Cached to avoid re-fetching."""
@@ -148,6 +92,63 @@ def allen_mouse_atlases() -> Iterator[BrainGlobeAtlas]:
         BrainGlobeAtlas(atlas_name, check_latest=skip_check_latest)
         for atlas_name in get_all_allen_mouse_names_sorted()
     )
+
+
+"""Metadata additions."""
+
+def get_atlas_resolution(atlas: BrainGlobeAtlas) -> tuple[float, ...]:
+    """Returns the atlas's per-axis resolution in micrometers.
+
+    Args:
+        atlas: BrainGlobe atlas to extract the resolution of.
+    """
+    return tuple(float(value) for value in atlas.metadata["resolution"])
+
+
+def ensure_asr_orientation(atlas: BrainGlobeAtlas) -> None:
+    """Raises if the atlas is not stored in ASR order.
+
+    The converter assumes ASR (Anterior, Superior, Right) storage order
+    throughout. If an atlas ever uses a different orientation, this should be
+    handled explicitly rather than silently producing incorrect output.
+
+    Args:
+        atlas: BrainGlobe atlas to check the orientation of.
+
+    Raises:
+        ValueError: If the atlas's orientation is not "asr".
+    """
+    orientation = atlas.metadata["orientation"]
+    if orientation != "asr":
+        raise ValueError(
+            f"Atlas {atlas.metadata['name']} has orientation {orientation!r}, "
+            "but the converter assumes 'asr'. Handling other orientations is "
+            "not implemented."
+        )
+
+
+def build_default_reference_coordinate(
+    atlas: BrainGlobeAtlas,
+) -> tuple[float, float, float]:
+    """Returns the default reference coordinate in ASR order (mm).
+
+    Uses the override for this atlas name if one exists; otherwise defaults to
+    the center of the AP/ML plane with DV = 0. Assumes ASR storage order.
+
+    Args:
+        atlas: BrainGlobe atlas to compute the default reference coordinate for.
+
+    Returns:
+        Default reference coordinate (AP, DV, ML) in mm.
+    """
+    name = atlas.metadata["name"]
+    if name in DEFAULT_REFERENCE_COORDINATE_OVERRIDES:
+        return DEFAULT_REFERENCE_COORDINATE_OVERRIDES[name]
+
+    # ASR order: axis 0 = AP, axis 1 = superior-inferior (DV), axis 2 = ML.
+    ap_extent_mm = atlas.shape_um[0] / 1000
+    ml_extent_mm = atlas.shape_um[2] / 1000
+    return ap_extent_mm / 2, 0.0, ml_extent_mm / 2
 
 
 """File I/O."""
