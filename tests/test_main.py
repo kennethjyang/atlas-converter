@@ -19,10 +19,18 @@ from main import (
 
 
 def make_atlas(
-    mocker: MockerFixture, name: str, resolution: int, root: object = 1
+    mocker: MockerFixture,
+    name: str,
+    resolution: int,
+    root: object = 1,
+    orientation: str = "asr",
 ) -> MagicMock:
     atlas = mocker.MagicMock()
-    atlas.metadata = {"name": name, "resolution": (resolution,)}
+    atlas.metadata = {
+        "name": name,
+        "resolution": (resolution, resolution, resolution),
+        "orientation": orientation,
+    }
     atlas.hierarchy.root = root
     return atlas
 
@@ -82,6 +90,37 @@ class TestConvert:
         mock_save_meshes.assert_not_called()
         mock_save_annotation.assert_not_called()
 
+    def test_raises_when_first_atlas_is_not_asr(
+        self, mocker: MockerFixture, tmp_path: Path
+    ):
+        mocker.patch("main.save_pinpoint_atlas_metadata_schema")
+        mock_save_annotation = mocker.patch("main.save_annotation")
+        atlas = make_atlas(mocker, "atlasA", 25, root=5, orientation="lps")
+
+        with pytest.raises(ValueError, match="asr"):
+            convert(iter([atlas]), 1, tmp_path)
+
+        mock_save_annotation.assert_not_called()
+
+    def test_raises_when_later_atlas_in_group_is_not_asr(
+        self, mocker: MockerFixture, tmp_path: Path
+    ):
+        mocker.patch("main.save_pinpoint_atlas_metadata_schema")
+        mocker.patch("main.build_atlas_path", return_value=tmp_path / "atlasA")
+        mocker.patch("main.build_structure_lut", return_value="structure_lut_sentinel")
+        mocker.patch("main.build_color_lut", return_value="color_lut_sentinel")
+        mocker.patch("main.save_color_lut")
+        mocker.patch("main.save_meshes")
+        mock_save_annotation = mocker.patch("main.save_annotation")
+        mocker.patch("main.get_sorted_structure_ids", return_value=[0, 5, 10])
+        atlas1 = make_atlas(mocker, "atlasA", 25, root=5)
+        atlas2 = make_atlas(mocker, "atlasA", 10, root=5, orientation="lps")
+
+        with pytest.raises(ValueError, match="asr"):
+            convert(iter([atlas1, atlas2]), 2, tmp_path)
+
+        mock_save_annotation.assert_called_once_with(atlas1, tmp_path / "atlasA")
+
     def test_full_happy_path_for_single_atlas_group(
         self, mocker: MockerFixture, tmp_path: Path
     ):
@@ -115,7 +154,7 @@ class TestConvert:
         mock_metadata_cls.assert_called_once_with(
             name="atlasA",
             converter_version="1.2.3",
-            resolutions=[25],
+            resolutions=[(25.0, 25.0, 25.0)],
             root_id=1,
             structures="structure_lut_sentinel",
             default_reference_coordinate="ref_coord_sentinel",
@@ -150,7 +189,10 @@ class TestConvert:
             mocker.call(atlas1, atlas_path),
             mocker.call(atlas2, atlas_path),
         ]
-        assert mock_metadata_cls.call_args.kwargs["resolutions"] == [25, 10]
+        assert mock_metadata_cls.call_args.kwargs["resolutions"] == [
+            (25.0, 25.0, 25.0),
+            (10.0, 10.0, 10.0),
+        ]
 
 
 class TestBrainglobe:

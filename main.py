@@ -28,9 +28,11 @@ from atlas_manager import (
     build_default_converted_atlases_path,
     build_default_reference_coordinate,
     custom_atlases,
+    ensure_asr_orientation,
     get_all_allen_mouse_names_sorted,
     get_all_atlas_names_sorted,
     get_all_atlas_names_sorted_from,
+    get_atlas_resolution,
     prepare_path,
     save_pinpoint_atlas_metadata_schema,
 )
@@ -104,8 +106,11 @@ def convert(
                 print(f"Atlas {group_name} is missing root! Skipping...")
                 continue
 
+            # Ensure the atlas is stored in the orientation the converter assumes.
+            ensure_asr_orientation(first_atlas)
+
             # Begin building resolution list.
-            resolutions = [first_atlas.metadata["resolution"][0]]
+            resolutions = [get_atlas_resolution(first_atlas)]
 
             # Build LUTs
             structure_lut = build_structure_lut(first_atlas)
@@ -129,8 +134,9 @@ def convert(
 
             # Compress annotations and track resolutions.
             for atlas in group_iterator:
+                ensure_asr_orientation(atlas)
                 save_annotation(atlas, atlas_path)
-                resolutions.append(atlas.metadata["resolution"][0])
+                resolutions.append(get_atlas_resolution(atlas))
                 progress.advance(task)
 
             # Save atlas metadata.

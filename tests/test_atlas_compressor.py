@@ -140,7 +140,7 @@ class TestSaveAnnotation:
 
         chunk_width = ceil(sqrt(1_000_000 / 4 / atlas.shape[1]))
         _, kwargs = mock_create_array.call_args
-        assert kwargs["store"] == tmp_path / "25.zarr"
+        assert kwargs["store"] == tmp_path / "25.0-25.0-25.0.zarr"
         assert kwargs["shape"] == atlas.shape
         assert kwargs["chunks"] == (chunk_width, atlas.shape[1], chunk_width)
         assert kwargs["shards"] == (chunk_width * 3, atlas.shape[1], chunk_width * 3)

@@ -50,21 +50,23 @@ class AtlasStructure(CamelCaseModel, frozen=True):
     color: tuple[UInt8, UInt8, UInt8]
 
 
-def ensure_sorted_and_unique(value: tuple[float, ...]) -> tuple[float, ...]:
-    """Ensures the tuple is sorted and has no duplicates.
+def ensure_sorted_and_unique(
+    value: tuple[tuple[float, float, float], ...],
+) -> tuple[tuple[float, float, float], ...]:
+    """Ensures the tuple is sorted by each entry's smallest value and has no duplicates.
 
     Args:
-        value: A tuple of floats to verify.
+        value: A tuple of per-axis resolution tuples to verify.
 
     Returns:
-        Sorted tuple.
+        Tuple sorted by the smallest value of each entry.
 
     Raises:
         ValueError: If the tuple has duplicates.
     """
     if len(set(value)) != len(value):
         raise ValueError("List must have unique values!")
-    return tuple(sorted(value))
+    return tuple(sorted(value, key=min))
 
 
 def ensure_unique_structures(
@@ -102,7 +104,8 @@ class PinpointAtlasMetadata(CamelCaseModel, frozen=True):
     Attributes:
         name: Name of the atlas by specimen.
         converter_version: Version number of the converter used to build this atlas.
-        resolutions: Supported resolutions in sorted order.
+        resolutions: Supported per-axis resolutions in micrometers, sorted by
+            each entry's smallest axis value.
         default_reference_coordinate: Default reference coordinate in ASR order (AP, DV, ML) in mm.
         root_id: ID of the root structure.
         structures: Ordered list of structures in the atlas where the index is the structure ID. ID 0 is empty space.
@@ -111,7 +114,9 @@ class PinpointAtlasMetadata(CamelCaseModel, frozen=True):
     name: Annotated[str, Field(min_length=1)]
     converter_version: Annotated[str, Field(min_length=1)]
     resolutions: Annotated[
-        tuple[float, ...], Field(min_length=1), AfterValidator(ensure_sorted_and_unique)
+        tuple[tuple[float, float, float], ...],
+        Field(min_length=1),
+        AfterValidator(ensure_sorted_and_unique),
     ]
     default_reference_coordinate: tuple[float, float, float]
     root_id: StructureId
