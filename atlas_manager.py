@@ -96,6 +96,7 @@ def allen_mouse_atlases() -> Iterator[BrainGlobeAtlas]:
 
 """Metadata additions."""
 
+
 def get_atlas_resolution(atlas: BrainGlobeAtlas) -> tuple[float, ...]:
     """Returns the atlas's per-axis resolution in micrometers.
 
