@@ -183,8 +183,15 @@ def _convert_mesh(item: tuple[int, str], atlas_path: Path):
     mesh.apply_scale(0.001)
     mesh.process()
 
+    # Smooth shading, i.e. blend normals across adjacent faces like Blender's
+    # "Shade Smooth" rather than exporting flat per-face normals.
+    mesh.vertex_normals
+
     # Export as GLB.
-    mesh.export(prepare_path(atlas_path / "meshes" / f"{compacted_id}.glb"))
+    mesh.export(
+        prepare_path(atlas_path / "meshes" / f"{compacted_id}.glb"),
+        include_normals=True,
+    )
 
 
 def save_meshes(atlas: BrainGlobeAtlas, atlas_path: Path):

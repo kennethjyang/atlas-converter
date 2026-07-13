@@ -214,5 +214,5 @@ class TestSaveMeshes:
         mock_mesh.apply_scale.assert_called_once_with(0.001)
         mock_mesh.process.assert_called_once()
         mock_mesh.export.assert_called_once_with(
-            tmp_path / "meshes" / f"{items[0][0]}.glb"
+            tmp_path / "meshes" / f"{items[0][0]}.glb", include_normals=True
         )
