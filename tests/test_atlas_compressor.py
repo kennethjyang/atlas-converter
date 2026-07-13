@@ -210,7 +210,7 @@ class TestSaveMeshes:
         convert_func(items[0])
 
         mock_load_mesh.assert_called_once_with(items[0][1])
-        mock_mesh.simplify_quadric_decimation.assert_called_once_with(percent=0.9)
+        mock_mesh.simplify_quadric_decimation.assert_called_once_with(percent=0.95)
         mock_mesh.apply_scale.assert_called_once_with(0.001)
         mock_mesh.process.assert_called_once()
         mock_mesh.export.assert_called_once_with(
