@@ -178,7 +178,7 @@ def _convert_mesh(item: tuple[int, str], atlas_path: Path):
     mesh = load_mesh(mesh_path)
 
     # Apply simplification and cleanup.
-    mesh = mesh.simplify_quadric_decimation(percent=0.9)
+    mesh = mesh.simplify_quadric_decimation(percent=0.95)
     mesh.apply_scale(0.001)
     mesh.process()
 
