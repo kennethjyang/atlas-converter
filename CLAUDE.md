@@ -1,3 +1,4 @@
 - Don't verify by running. Only do verification using static analysis with ruff format, ruff lint, and pyrefly check.
 - Use uv instead of pip.
 - Imports should use the `from module import item` pattern.
+- Ensure unit tests are up to date and covers all branches.
