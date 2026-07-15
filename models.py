@@ -103,7 +103,7 @@ class PinpointAtlasMetadata(CamelCaseModel, frozen=True):
 
     Attributes:
         name: Name of the atlas by specimen.
-        converter_version: Version number of the converter used to build this atlas.
+        version: Version number of the converter used to build this atlas.
         resolutions: Supported per-axis resolutions in micrometers, sorted by
             each entry's smallest axis value.
         dimensions: ASR order dimensions in mm.
@@ -113,7 +113,7 @@ class PinpointAtlasMetadata(CamelCaseModel, frozen=True):
     """
 
     name: Annotated[str, Field(min_length=1)]
-    converter_version: Annotated[str, Field(min_length=1)]
+    version: Annotated[str, Field(min_length=1)]
     resolutions: Annotated[
         tuple[tuple[float, float, float], ...],
         Field(min_length=1),

@@ -12,7 +12,7 @@ from main import (
     callback,
     convert,
     custom,
-    get_converter_version,
+    get_version,
     mouse,
     print_version_callback,
 )
@@ -40,7 +40,7 @@ class TestGetConverterVersion:
         mocker.patch("builtins.open", mocker.mock_open())
         mocker.patch("main.load", return_value={"project": {"version": "9.9.9"}})
 
-        assert get_converter_version() == "9.9.9"
+        assert get_version() == "9.9.9"
 
 
 class TestPrintVersionCallback:
