@@ -199,6 +199,7 @@ class TestSaveMeshes:
         mock_pool_cls = mocker.patch("atlas_compressor.Pool")
         mock_pool = mock_pool_cls.return_value.__enter__.return_value
         mock_mesh = mocker.MagicMock()
+        mock_mesh.faces = list(range(1000))
         mock_mesh.simplify_quadric_decimation.return_value = mock_mesh
         mock_load_mesh = mocker.patch(
             "atlas_compressor.load_mesh", return_value=mock_mesh
@@ -210,9 +211,29 @@ class TestSaveMeshes:
         convert_func(items[0])
 
         mock_load_mesh.assert_called_once_with(items[0][1])
-        mock_mesh.simplify_quadric_decimation.assert_called_once_with(percent=0.95)
+        # 5% of 1000 faces = 50, well under the 8000-face cap.
+        mock_mesh.simplify_quadric_decimation.assert_called_once_with(face_count=50)
         mock_mesh.apply_scale.assert_called_once_with(0.001)
         mock_mesh.process.assert_called_once()
         mock_mesh.export.assert_called_once_with(
             tmp_path / "meshes" / f"{items[0][0]}.glb", include_normals=True
         )
+
+    def test_convert_mesh_caps_face_count_for_large_meshes(
+        self, make_mock_atlas: MakeMockAtlas, mocker: MockerFixture, tmp_path: Path
+    ):
+        atlas = make_mock_atlas(structures={1: {}, 2: {}})
+        mock_pool_cls = mocker.patch("atlas_compressor.Pool")
+        mock_pool = mock_pool_cls.return_value.__enter__.return_value
+        mock_mesh = mocker.MagicMock()
+        mock_mesh.faces = list(range(1_000_000))
+        mock_mesh.simplify_quadric_decimation.return_value = mock_mesh
+        mocker.patch("atlas_compressor.load_mesh", return_value=mock_mesh)
+        mocker.patch("atlas_compressor.Path.is_file", return_value=True)
+
+        save_meshes(atlas, tmp_path)
+        convert_func, items = mock_pool.map.call_args.args
+        convert_func(items[0])
+
+        # 5% of 1,000,000 faces = 50,000, above the 8000-face cap.
+        mock_mesh.simplify_quadric_decimation.assert_called_once_with(face_count=8000)

@@ -134,7 +134,8 @@ def build_default_reference_coordinate(
     """Returns the default reference coordinate in ASR order (mm).
 
     Uses the override for this atlas name if one exists; otherwise defaults to
-    the center of the AP/ML plane with DV = 0. Assumes ASR storage order.
+    the center of the atlas volume on all three axes. Assumes ASR storage
+    order.
 
     Args:
         atlas: BrainGlobe atlas to compute the default reference coordinate for.
@@ -148,8 +149,9 @@ def build_default_reference_coordinate(
 
     # ASR order: axis 0 = AP, axis 1 = superior-inferior (DV), axis 2 = ML.
     ap_extent_mm = atlas.shape_um[0] / 1000
+    dv_extent_mm = atlas.shape_um[1] / 1000
     ml_extent_mm = atlas.shape_um[2] / 1000
-    return ap_extent_mm / 2, 0.0, ml_extent_mm / 2
+    return ap_extent_mm / 2, dv_extent_mm / 2, ml_extent_mm / 2
 
 
 """File I/O."""

@@ -18,6 +18,11 @@ from models import AtlasStructure, StructureLut, UInt8
 
 type Annotation = ndarray[tuple[int, int, int], dtype[uint16]]
 
+# Mesh decimation: keep this fraction of faces, capped at an absolute upper
+# limit so very large source meshes (e.g. human) stay lightweight.
+MESH_DECIMATION_KEEP_FRACTION = 0.05
+MESH_MAX_FACES = 8000
+
 """Remappings."""
 
 
@@ -178,8 +183,12 @@ def _convert_mesh(item: tuple[int, str], atlas_path: Path):
     # Load.
     mesh = load_mesh(mesh_path)
 
-    # Apply simplification and cleanup.
-    mesh = mesh.simplify_quadric_decimation(percent=0.95)
+    # Simplify: keep a small fraction of faces, capped at an absolute upper
+    # limit so very large source meshes (e.g. human) stay lightweight.
+    target_faces = min(
+        round(len(mesh.faces) * MESH_DECIMATION_KEEP_FRACTION), MESH_MAX_FACES
+    )
+    mesh = mesh.simplify_quadric_decimation(face_count=target_faces)
     mesh.apply_scale(0.001)
     mesh.process()
 
@@ -195,7 +204,7 @@ def _convert_mesh(item: tuple[int, str], atlas_path: Path):
 
 
 def save_meshes(atlas: BrainGlobeAtlas, atlas_path: Path):
-    """Write atlases meshes to disk as GLB with marching cube decimation.
+    """Write atlases meshes to disk as GLB with quadric decimation.
 
     Args:
         atlas: BrainGlobe atlas to convert.
