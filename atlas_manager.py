@@ -128,6 +128,23 @@ def ensure_asr_orientation(atlas: BrainGlobeAtlas) -> None:
         )
 
 
+def build_atlas_dimensions(atlas: BrainGlobeAtlas) -> tuple[float, float, float]:
+    """Returns the atlas's volume dimensions in ASR order (mm).
+
+    Assumes ASR storage order.
+
+    Args:
+        atlas: BrainGlobe atlas to compute the dimensions for.
+
+    Returns:
+        Atlas dimensions (AP, DV, ML) in mm.
+    """
+    ap_extent_mm = atlas.shape_um[0] / 1000
+    dv_extent_mm = atlas.shape_um[1] / 1000
+    ml_extent_mm = atlas.shape_um[2] / 1000
+    return ap_extent_mm, dv_extent_mm, ml_extent_mm
+
+
 def build_default_reference_coordinate(
     atlas: BrainGlobeAtlas,
 ) -> tuple[float, float, float]:

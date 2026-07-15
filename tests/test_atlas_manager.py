@@ -10,6 +10,7 @@ from atlas_manager import (
     DEFAULT_REFERENCE_COORDINATE_OVERRIDES,
     all_atlases,
     allen_mouse_atlases,
+    build_atlas_dimensions,
     build_atlas_path,
     build_default_converted_atlases_path,
     build_default_reference_coordinate,
@@ -217,6 +218,22 @@ class TestEnsureAsrOrientation:
         atlas = make_mock_atlas(name="weird_atlas", orientation="lps")
         with pytest.raises(ValueError, match="weird_atlas"):
             ensure_asr_orientation(atlas)
+
+
+class TestBuildAtlasDimensions:
+    def test_returns_shape_um_in_mm(self, make_mock_atlas: MakeMockAtlas):
+        atlas = make_mock_atlas(shape=(200, 100, 400), resolution=(25, 25, 25))
+        result = build_atlas_dimensions(atlas)
+        # shape_um = (5000, 2500, 10000)
+        assert result == (5.0, 2.5, 10.0)
+
+    def test_returns_shape_um_in_mm_with_different_resolution(
+        self, make_mock_atlas: MakeMockAtlas
+    ):
+        atlas = make_mock_atlas(shape=(100, 200, 300), resolution=(10, 10, 10))
+        result = build_atlas_dimensions(atlas)
+        # shape_um = (1000, 2000, 3000)
+        assert result == (1.0, 2.0, 3.0)
 
 
 class TestBuildDefaultReferenceCoordinate:

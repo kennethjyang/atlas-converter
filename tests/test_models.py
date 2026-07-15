@@ -112,6 +112,7 @@ class TestPinpointAtlasMetadata:
             "name": "test_atlas",
             "converter_version": "1.0.0",
             "resolutions": ((25.0, 25.0, 25.0), (10.0, 10.0, 10.0)),
+            "dimensions": (10.0, 8.0, 11.4),
             "root_id": 0,
             "structures": (make_structure(name="Root"),),
             "default_reference_coordinate": (1.0, 2.0, 3.0),
@@ -123,6 +124,7 @@ class TestPinpointAtlasMetadata:
         metadata = self.make_metadata()
         assert metadata.name == "test_atlas"
         assert metadata.resolutions == ((10.0, 10.0, 10.0), (25.0, 25.0, 25.0))
+        assert metadata.dimensions == (10.0, 8.0, 11.4)
         assert metadata.default_reference_coordinate == (1.0, 2.0, 3.0)
 
     def test_empty_name_raises(self):
