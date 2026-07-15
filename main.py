@@ -42,7 +42,7 @@ from models import PinpointAtlasMetadata
 app = Typer()
 
 
-def get_converter_version() -> str:
+def get_version() -> str:
     """Return the version of the converter as specified in the pyproject.toml file."""
     with open(Path(__file__).parent / "pyproject.toml", "rb") as f:
         return load(f)["project"]["version"]
@@ -55,7 +55,7 @@ def print_version_callback(do_it: bool):
         do_it: Flag to do the printing.
     """
     if do_it:
-        print(get_converter_version())
+        print(get_version())
         raise Exit()
 
 
@@ -143,7 +143,7 @@ def convert(
             # Save atlas metadata.
             metadata = PinpointAtlasMetadata(
                 name=group_name,
-                converter_version=get_converter_version(),
+                version=get_version(),
                 resolutions=resolutions,
                 dimensions=build_atlas_dimensions(first_atlas),
                 default_reference_coordinate=build_default_reference_coordinate(
