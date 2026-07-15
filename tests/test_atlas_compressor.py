@@ -211,9 +211,8 @@ class TestSaveMeshes:
         convert_func(items[0])
 
         mock_load_mesh.assert_called_once_with(items[0][1])
-        # 1000 faces is well under the 8000-face cap, so the minimum 95%
-        # reduction applies.
-        mock_mesh.simplify_quadric_decimation.assert_called_once_with(percent=0.95)
+        # 5% of 1000 faces = 50, well under the 8000-face cap.
+        mock_mesh.simplify_quadric_decimation.assert_called_once_with(face_count=50)
         mock_mesh.apply_scale.assert_called_once_with(0.001)
         mock_mesh.process.assert_called_once()
         mock_mesh.export.assert_called_once_with(
@@ -236,6 +235,5 @@ class TestSaveMeshes:
         convert_func, items = mock_pool.map.call_args.args
         convert_func(items[0])
 
-        # A 95% reduction would leave 50,000 faces, above the 8000-face cap,
-        # so the reduction needed to hit the cap (99.2%) is used instead.
-        mock_mesh.simplify_quadric_decimation.assert_called_once_with(percent=0.992)
+        # 5% of 1,000,000 faces = 50,000, above the 8000-face cap.
+        mock_mesh.simplify_quadric_decimation.assert_called_once_with(face_count=8000)
