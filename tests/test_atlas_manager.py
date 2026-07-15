@@ -234,9 +234,9 @@ class TestBuildDefaultReferenceCoordinate:
         result = build_default_reference_coordinate(atlas)
         # shape_um = (5000, 2500, 10000)
         # AP center (axis 0) = 5000 / 2 / 1000 = 2.5 mm
-        # DV = 0.0
+        # DV center (axis 1) = 2500 / 2 / 1000 = 1.25 mm
         # ML center (axis 2) = 10000 / 2 / 1000 = 5.0 mm
-        assert result == (2.5, 0.0, 5.0)
+        assert result == (2.5, 1.25, 5.0)
 
     def test_computes_default_with_different_resolution(
         self, make_mock_atlas: MakeMockAtlas
@@ -247,8 +247,9 @@ class TestBuildDefaultReferenceCoordinate:
         result = build_default_reference_coordinate(atlas)
         # shape_um = (1000, 2000, 3000)
         # AP center = 1000 / 2 / 1000 = 0.5 mm
+        # DV center = 2000 / 2 / 1000 = 1.0 mm
         # ML center = 3000 / 2 / 1000 = 1.5 mm
-        assert result == (0.5, 0.0, 1.5)
+        assert result == (0.5, 1.0, 1.5)
 
     def test_overrides_dict_contains_allen_mouse(self):
         assert "allen_mouse" in DEFAULT_REFERENCE_COORDINATE_OVERRIDES
