@@ -90,7 +90,7 @@ def convert(
 
     # Iterate through all BrainGlobe atlases.
     with Progress() as progress:
-        task = progress.add_task("Converting BrainGlobe atlases...", total=atlas_count)
+        task = progress.add_task("Converting atlases...", total=atlas_count)
 
         for group_name, group_iterator in groupby(
             atlases, key=lambda lambda_atlas: lambda_atlas.metadata["name"]
