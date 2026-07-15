@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pytest
+from numpy import uint16, zeros
 from pytest_mock import MockerFixture
 
 import atlas_manager
@@ -245,28 +246,36 @@ class TestBuildDefaultReferenceCoordinate:
     def test_computes_default_for_non_override_atlas(
         self, make_mock_atlas: MakeMockAtlas
     ):
+        annotation = zeros((4, 4, 4), dtype=uint16)
+        annotation[1:3, 1:4, 0:3] = 1  # AP idx 1-2, DV idx 1-3, ML idx 0-2
         atlas = make_mock_atlas(
-            name="test_atlas", shape=(200, 100, 400), resolution=(25, 25, 25)
+            name="test_atlas",
+            shape=(4, 4, 4),
+            resolution=(25, 25, 25),
+            annotation=annotation,
         )
         result = build_default_reference_coordinate(atlas)
-        # shape_um = (5000, 2500, 10000)
-        # AP center (axis 0) = 5000 / 2 / 1000 = 2.5 mm
-        # DV center (axis 1) = 2500 / 2 / 1000 = 1.25 mm
-        # ML center (axis 2) = 10000 / 2 / 1000 = 5.0 mm
-        assert result == (2.5, 1.25, 5.0)
+        # AP center = (1 + 2) / 2 * 25 / 1000 = 0.0375 mm
+        # DV top    = 1 * 25 / 1000 = 0.025 mm
+        # ML center = (0 + 2) / 2 * 25 / 1000 = 0.025 mm
+        assert result == (0.0375, 0.025, 0.025)
 
     def test_computes_default_with_different_resolution(
         self, make_mock_atlas: MakeMockAtlas
     ):
+        annotation = zeros((6, 5, 4), dtype=uint16)
+        annotation[2:6, 0:2, 1:3] = 1  # AP idx 2-5, DV idx 0-1, ML idx 1-2
         atlas = make_mock_atlas(
-            name="another_atlas", shape=(100, 200, 300), resolution=(10, 10, 10)
+            name="another_atlas",
+            shape=(6, 5, 4),
+            resolution=(10, 10, 10),
+            annotation=annotation,
         )
         result = build_default_reference_coordinate(atlas)
-        # shape_um = (1000, 2000, 3000)
-        # AP center = 1000 / 2 / 1000 = 0.5 mm
-        # DV center = 2000 / 2 / 1000 = 1.0 mm
-        # ML center = 3000 / 2 / 1000 = 1.5 mm
-        assert result == (0.5, 1.0, 1.5)
+        # AP center = (2 + 5) / 2 * 10 / 1000 = 0.035 mm
+        # DV top    = 0 * 10 / 1000 = 0.0 mm
+        # ML center = (1 + 2) / 2 * 10 / 1000 = 0.015 mm
+        assert result == (0.035, 0.0, 0.015)
 
     def test_overrides_dict_contains_allen_mouse(self):
         assert "allen_mouse" in DEFAULT_REFERENCE_COORDINATE_OVERRIDES

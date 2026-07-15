@@ -10,6 +10,7 @@ from typing import Iterator
 
 from brainglobe_atlasapi import list_atlases
 from brainglobe_atlasapi.bg_atlas import BrainGlobeAtlas
+from numpy import flatnonzero
 
 from models import PinpointAtlasMetadata
 
@@ -98,7 +99,7 @@ def allen_mouse_atlases() -> Iterator[BrainGlobeAtlas]:
 
 
 def get_atlas_resolution(atlas: BrainGlobeAtlas) -> tuple[float, ...]:
-    """Returns the atlas's per-axis resolution in micrometers.
+    """Returns the atlas's per-axis voxel resolution in micrometers.
 
     Args:
         atlas: BrainGlobe atlas to extract the resolution of.
@@ -150,9 +151,10 @@ def build_default_reference_coordinate(
 ) -> tuple[float, float, float]:
     """Returns the default reference coordinate in ASR order (mm).
 
-    Uses the override for this atlas name if one exists; otherwise defaults to
-    the center of the atlas volume on all three axes. Assumes ASR storage
-    order.
+    Uses the override for this atlas name if one exists; otherwise computes it
+    from the bounding box of the atlas's real (non-empty) voxels: AP and ML
+    are the center of that bounding box, and DV is its most superior edge.
+    Assumes ASR storage order.
 
     Args:
         atlas: BrainGlobe atlas to compute the default reference coordinate for.
@@ -165,10 +167,20 @@ def build_default_reference_coordinate(
         return DEFAULT_REFERENCE_COORDINATE_OVERRIDES[name]
 
     # ASR order: axis 0 = AP, axis 1 = superior-inferior (DV), axis 2 = ML.
-    ap_extent_mm = atlas.shape_um[0] / 1000
-    dv_extent_mm = atlas.shape_um[1] / 1000
-    ml_extent_mm = atlas.shape_um[2] / 1000
-    return ap_extent_mm / 2, dv_extent_mm / 2, ml_extent_mm / 2
+    resolution_um = get_atlas_resolution(atlas)
+
+    occupied = atlas.annotation != 0
+    ap_present = flatnonzero(occupied.any(axis=(1, 2)))
+    dv_present = flatnonzero(occupied.any(axis=(0, 2)))
+    ml_present = flatnonzero(occupied.any(axis=(0, 1)))
+
+    # AP / ML: center of the real-voxel bounding box.
+    ap_mm = (int(ap_present[0]) + int(ap_present[-1])) / 2 * resolution_um[0] / 1000
+    ml_mm = (int(ml_present[0]) + int(ml_present[-1])) / 2 * resolution_um[2] / 1000
+    # DV: most superior edge of the real-voxel bounding box.
+    dv_mm = int(dv_present[0]) * resolution_um[1] / 1000
+
+    return ap_mm, dv_mm, ml_mm
 
 
 """File I/O."""
