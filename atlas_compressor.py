@@ -18,9 +18,9 @@ from models import AtlasStructure, StructureLut, UInt8
 
 type Annotation = ndarray[tuple[int, int, int], dtype[uint16]]
 
-# Mesh decimation: keep this fraction of faces, capped at an absolute upper
-# limit so very large source meshes (e.g. human) stay lightweight.
-MESH_DECIMATION_KEEP_FRACTION = 0.05
+# Mesh decimation: remove at least this fraction of faces, more if needed to
+# keep very large source meshes (e.g. human) under the absolute face cap.
+MESH_DECIMATION_MIN_REDUCTION = 0.95
 MESH_MAX_FACES = 8000
 
 """Remappings."""
@@ -183,12 +183,12 @@ def _convert_mesh(item: tuple[int, str], atlas_path: Path):
     # Load.
     mesh = load_mesh(mesh_path)
 
-    # Simplify: keep a small fraction of faces, capped at an absolute upper
-    # limit so very large source meshes (e.g. human) stay lightweight.
-    target_faces = min(
-        round(len(mesh.faces) * MESH_DECIMATION_KEEP_FRACTION), MESH_MAX_FACES
-    )
-    mesh = mesh.simplify_quadric_decimation(face_count=target_faces)
+    # Simplify: remove enough faces to stay under the absolute face cap, but
+    # never less than the minimum reduction.
+    face_count = len(mesh.faces)
+    reduction_for_cap = 1 - MESH_MAX_FACES / face_count
+    reduction = max(reduction_for_cap, MESH_DECIMATION_MIN_REDUCTION)
+    mesh = mesh.simplify_quadric_decimation(percent=reduction)
     mesh.apply_scale(0.001)
     mesh.process()
 
