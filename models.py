@@ -106,6 +106,7 @@ class PinpointAtlasMetadata(CamelCaseModel, frozen=True):
         converter_version: Version number of the converter used to build this atlas.
         resolutions: Supported per-axis resolutions in micrometers, sorted by
             each entry's smallest axis value.
+        dimensions: ASR order dimensions in mm.
         default_reference_coordinate: Default reference coordinate in ASR order (AP, DV, ML) in mm.
         root_id: ID of the root structure.
         structures: Ordered list of structures in the atlas where the index is the structure ID. ID 0 is empty space.
@@ -118,6 +119,7 @@ class PinpointAtlasMetadata(CamelCaseModel, frozen=True):
         Field(min_length=1),
         AfterValidator(ensure_sorted_and_unique),
     ]
+    dimensions: tuple[float, float, float]
     default_reference_coordinate: tuple[float, float, float]
     root_id: StructureId
     structures: Annotated[

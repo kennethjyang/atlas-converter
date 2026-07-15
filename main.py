@@ -24,6 +24,7 @@ from atlas_compressor import (
 from atlas_manager import (
     all_atlases,
     allen_mouse_atlases,
+    build_atlas_dimensions,
     build_atlas_path,
     build_default_converted_atlases_path,
     build_default_reference_coordinate,
@@ -144,11 +145,12 @@ def convert(
                 name=group_name,
                 converter_version=get_converter_version(),
                 resolutions=resolutions,
-                root_id=root_id,
-                structures=structure_lut,
+                dimensions=build_atlas_dimensions(first_atlas),
                 default_reference_coordinate=build_default_reference_coordinate(
                     first_atlas
                 ),
+                root_id=root_id,
+                structures=structure_lut,
             )
             with open(prepare_path(atlas_path / "atlas.json"), "w") as f:
                 f.write(metadata.model_dump_json())

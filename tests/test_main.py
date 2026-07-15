@@ -139,6 +139,10 @@ class TestConvert:
             "main.build_default_reference_coordinate",
             return_value="ref_coord_sentinel",
         )
+        mock_build_dimensions = mocker.patch(
+            "main.build_atlas_dimensions",
+            return_value="dimensions_sentinel",
+        )
         mock_metadata_cls = mocker.patch("main.PinpointAtlasMetadata")
         mock_metadata_cls.return_value.model_dump_json.return_value = '{"a":1}'
         mock_open = mocker.patch("builtins.open", mocker.mock_open())
@@ -151,10 +155,12 @@ class TestConvert:
         mock_save_meshes.assert_called_once_with(atlas, atlas_path)
         mock_save_annotation.assert_called_once_with(atlas, atlas_path)
         mock_build_ref.assert_called_once_with(atlas)
+        mock_build_dimensions.assert_called_once_with(atlas)
         mock_metadata_cls.assert_called_once_with(
             name="atlasA",
             converter_version="1.2.3",
             resolutions=[(25.0, 25.0, 25.0)],
+            dimensions="dimensions_sentinel",
             root_id=1,
             structures="structure_lut_sentinel",
             default_reference_coordinate="ref_coord_sentinel",
