@@ -110,7 +110,7 @@ class TestPinpointAtlasMetadata:
     def make_metadata(self, **overrides: Any) -> PinpointAtlasMetadata:
         defaults: dict[str, Any] = {
             "name": "test_atlas",
-            "converter_version": "1.0.0",
+            "version": "1.0.0",
             "resolutions": ((25.0, 25.0, 25.0), (10.0, 10.0, 10.0)),
             "dimensions": (10.0, 8.0, 11.4),
             "root_id": 0,
@@ -131,9 +131,9 @@ class TestPinpointAtlasMetadata:
         with pytest.raises(ValidationError):
             self.make_metadata(name="")
 
-    def test_empty_converter_version_raises(self):
+    def test_empty_version_raises(self):
         with pytest.raises(ValidationError):
-            self.make_metadata(converter_version="")
+            self.make_metadata(version="")
 
     def test_unsorted_resolutions_are_sorted(self):
         metadata = self.make_metadata(

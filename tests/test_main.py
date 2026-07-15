@@ -35,7 +35,7 @@ def make_atlas(
     return atlas
 
 
-class TestGetConverterVersion:
+class TestGetVersion:
     def test_returns_version_from_pyproject_toml(self, mocker: MockerFixture):
         mocker.patch("builtins.open", mocker.mock_open())
         mocker.patch("main.load", return_value={"project": {"version": "9.9.9"}})
@@ -47,7 +47,7 @@ class TestPrintVersionCallback:
     def test_prints_version_and_exits_when_do_it_true(
         self, mocker: MockerFixture, capsys: pytest.CaptureFixture[str]
     ):
-        mocker.patch("main.get_converter_version", return_value="9.9.9")
+        mocker.patch("main.get_version", return_value="9.9.9")
 
         with pytest.raises(Exit):
             print_version_callback(True)
@@ -57,7 +57,7 @@ class TestPrintVersionCallback:
     def test_does_nothing_when_do_it_false(
         self, mocker: MockerFixture, capsys: pytest.CaptureFixture[str]
     ):
-        mock_get_version = mocker.patch("main.get_converter_version")
+        mock_get_version = mocker.patch("main.get_version")
 
         print_version_callback(False)
 
@@ -134,7 +134,7 @@ class TestConvert:
         mock_save_meshes = mocker.patch("main.save_meshes")
         mock_save_annotation = mocker.patch("main.save_annotation")
         mocker.patch("main.get_sorted_structure_ids", return_value=[0, 5, 10])
-        mocker.patch("main.get_converter_version", return_value="1.2.3")
+        mocker.patch("main.get_version", return_value="1.2.3")
         mock_build_ref = mocker.patch(
             "main.build_default_reference_coordinate",
             return_value="ref_coord_sentinel",
@@ -158,7 +158,7 @@ class TestConvert:
         mock_build_dimensions.assert_called_once_with(atlas)
         mock_metadata_cls.assert_called_once_with(
             name="atlasA",
-            converter_version="1.2.3",
+            version="1.2.3",
             resolutions=[(25.0, 25.0, 25.0)],
             dimensions="dimensions_sentinel",
             root_id=1,
@@ -181,7 +181,7 @@ class TestConvert:
         mocker.patch("main.save_meshes")
         mock_save_annotation = mocker.patch("main.save_annotation")
         mocker.patch("main.get_sorted_structure_ids", return_value=[0, 5, 10])
-        mocker.patch("main.get_converter_version", return_value="1.2.3")
+        mocker.patch("main.get_version", return_value="1.2.3")
         mocker.patch(
             "main.build_default_reference_coordinate",
             return_value="ref_coord_sentinel",
